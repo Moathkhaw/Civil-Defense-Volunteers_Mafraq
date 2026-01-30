@@ -631,8 +631,8 @@
 
     <!-- Logic -->
     <script>
-        // API Configuration
-        const apiKey = ""; // Will be injected by environment
+        // API Configuration - Set to empty as per environment
+        const apiKey = ""; 
 
         const app = {
             data: {
@@ -640,7 +640,7 @@
                     tickerText: "أهلاً بكم في بوابة متطوعي الدفاع المدني - المفرق",
                     logoUrl: "https://upload.wikimedia.org/wikipedia/commons/e/e0/Jordan_Civil_Defence_Logo.png",
                     gallery: [],
-                    customShifts: [] // New: Store admin-added dates
+                    customShifts: [] 
                 },
                 suggestions: [],
                 users: [
@@ -699,19 +699,42 @@
                 
                 if (storedUsers) {
                     let parsedUsers = JSON.parse(storedUsers);
+                    // Merge hardcoded users (in case of updates)
                     this.data.users.forEach(defaultUser => {
                         if(!parsedUsers.find(u => u.id === defaultUser.id)) {
                             parsedUsers.push(defaultUser);
                         } else if (defaultUser.id === '38') {
                             const u = parsedUsers.find(u => u.id === '38');
-                            if(u) u.name = 'رند العناسوه';
+                            if(u) u.name = 'رند العناسوه'; 
+                        } else if (defaultUser.id === '18') {
+                             const u = parsedUsers.find(u => u.id === '18');
+                             if(u) u.name = 'سجود شديفات';
+                        } else if (defaultUser.id === '32') {
+                             const u = parsedUsers.find(u => u.id === '32');
+                             if(u) u.name = 'رويدا';
                         }
                     });
                     this.data.users = parsedUsers;
-                } else {
-                    this.saveData(); 
                 }
                 
+                // --- GENERATE UP TO 100 USERS ---
+                if (this.data.users.filter(u => u.role === 'volunteer').length < 100) {
+                    for (let i = 39; i <= 100; i++) {
+                        if (!this.data.users.find(u => u.id === i.toString())) {
+                            this.data.users.push({
+                                id: i.toString(),
+                                pass: Math.floor(1000 + Math.random() * 9000).toString(), 
+                                name: `متطوع ${i}`,
+                                role: 'volunteer',
+                                location: 'المفرق',
+                                status: 'active',
+                                notifications: []
+                            });
+                        }
+                    }
+                    this.saveData();
+                }
+
                 if (storedSettings) {
                     this.data.settings = JSON.parse(storedSettings);
                     if(!this.data.settings.customShifts) this.data.settings.customShifts = [];
@@ -729,11 +752,11 @@
                     localStorage.setItem('jcd_v9_settings', JSON.stringify(this.data.settings));
                     localStorage.setItem('jcd_v9_suggestions', JSON.stringify(this.data.suggestions));
                 } catch (e) {
-                    alert('تحذير: مساحة التخزين ممتلئة. حاول حذف بعض الصور القديمة.');
+                    alert('تحذير: مساحة التخزين ممتلئة.');
                 }
             },
 
-            // --- IMAGE COMPRESSION UTILITY (NEW) ---
+            // --- IMAGE COMPRESSION ---
             compressImage: function(file) {
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
@@ -743,10 +766,8 @@
                         img.src = e.target.result;
                         img.onload = () => {
                             const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 800; // Limits width to 800px
+                            const MAX_WIDTH = 800; 
                             const scaleSize = MAX_WIDTH / img.width;
-                            
-                            // Calculate new dimensions
                             if (MAX_WIDTH < img.width) {
                                 canvas.width = MAX_WIDTH;
                                 canvas.height = img.height * scaleSize;
@@ -754,11 +775,8 @@
                                 canvas.width = img.width;
                                 canvas.height = img.height;
                             }
-                            
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                            
-                            // Compress to JPEG with 0.7 quality
                             const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
                             resolve(compressedDataUrl);
                         };
@@ -768,7 +786,7 @@
                 });
             },
 
-            // --- Missing Functions Restored ---
+            // --- Core Functions ---
             applySettings: function() {
                 const tickerDiv = document.getElementById('news-ticker-container');
                 const tickerText = document.getElementById('newsTickerText');
@@ -797,7 +815,6 @@
                 }
             },
 
-            // --- Other Core Functions ---
             showSection: function(id) {
                 document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
                 const sec = document.getElementById(id);
@@ -920,7 +937,7 @@
                 this.renderSuggestions();
                 this.renderCustomShiftsList();
                 this.checkAbsence(); 
-                this.renderShiftRosterAdmin(); // NEW
+                this.renderShiftRosterAdmin(); 
                 
                 const select = document.getElementById('msgRecipient');
                 select.innerHTML = '<option value="all">الجميع</option>';
@@ -932,7 +949,7 @@
                 document.getElementById('adminLogoUrl').value = ''; 
             },
 
-            // --- Helper Functions ---
+            // --- Shift Management ---
             addCustomShift: function() {
                 const date = document.getElementById('newShiftDate').value;
                 if(!date) return alert('الرجاء اختيار تاريخ');
@@ -972,12 +989,11 @@
                 `}).join('');
             },
 
-            // --- NEW: Admin Shift Roster ---
             renderShiftRosterAdmin: function() {
                 const tbody = document.getElementById('adminShiftRosterBody');
                 let shiftDates = new Set();
                 let today = new Date();
-                let d = new Date(today); d.setDate(d.getDate() + (1 + 7 - d.getDay()) % 7); // Next Mon
+                let d = new Date(today); d.setDate(d.getDate() + (1 + 7 - d.getDay()) % 7); 
                 
                 for(let i=0; i<4; i++) {
                     let monday = new Date(d);
@@ -1006,7 +1022,6 @@
                     ).map(u => {
                         const shift = u.shifts.find(s => s.date === dateKey);
                         const isAttended = shift.attended || false;
-                        // Styles for attended vs pending
                         const btnClass = isAttended 
                             ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-200" 
                             : "bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200";
@@ -1043,7 +1058,6 @@
                 }
             },
 
-            // --- ABSENCE CHECK (NEW) ---
             checkAbsence: function() {
                 const today = new Date().toISOString().split('T')[0];
                 this.data.users.forEach(u => {
@@ -1063,16 +1077,25 @@
                 });
             },
 
-            // --- AI Features ---
+            // --- AI Features (With Fallback) ---
             async callGemini(prompt) {
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
                 const payload = { contents: [{ parts: [{ text: prompt }] }] };
                 try {
+                    if (!apiKey) throw new Error("No API Key"); // Trigger fallback
                     const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     if (!response.ok) throw new Error(`API Error: ${response.status}`);
                     const data = await response.json();
                     return data.candidates[0].content.parts[0].text;
-                } catch (error) { return "عذراً، حدث خطأ في الاتصال بالخادم الذكي."; }
+                } catch (error) { 
+                    // Fallback Logic
+                    console.log("AI Fallback active");
+                    if(prompt.includes("تقرير")) {
+                        return `**تقرير مناوبة تلقائي (النظام الاحتياطي)**\n\nإلى إدارة الدفاع المدني،\n\nأود إعلامكم بتفاصيل مناوبتي كما يلي:\n${prompt.split('بناءً على:')[1] || 'لا توجد تفاصيل'}\n\nدمتم بود.`;
+                    }
+                    if(prompt.includes("حروق")) return "**إسعاف الحروق (تلقائي):**\n1. برد المنطقة بماء فاتر لمدة 10 دقائق.\n2. غط الحرق بضمادة نظيفة.\n3. لا تفقأ الفقاعات.\n4. اتصل بالدفاع المدني في الحالات الخطرة.";
+                    return "عذراً، الخادم الذكي مشغول حالياً. يرجى مراجعة دليل السلامة العام."; 
+                }
             },
 
             async askSafetyAdvisor() {
@@ -1432,7 +1455,15 @@
 
             requestShift: function(date) {
                 if(!this.data.currentUser.shifts) this.data.currentUser.shifts = [];
-                this.data.currentUser.shifts.push({ date, status: 'pending' }); this.saveData(); this.generateShifts();
+                // Prevent duplicate requests for same day
+                if(this.data.currentUser.shifts.find(s => s.date === date)) {
+                    alert('لقد قمت بإرسال طلب لهذا اليوم مسبقاً');
+                    return;
+                }
+                this.data.currentUser.shifts.push({ date, status: 'pending' }); 
+                this.saveData(); 
+                this.generateShifts();
+                alert('تم إرسال طلب المناوبة بنجاح');
             },
 
             renderElectronicGate: function() {
