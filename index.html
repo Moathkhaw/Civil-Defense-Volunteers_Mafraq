@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة متطوعي الدفاع المدني - المفرق</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Markdown Parser for AI responses -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f3f4f6;
+        }
+        
+        /* Custom Colors */
+        .bg-jcd-blue { background-color: #1e3a8a; } 
+        .bg-jcd-red { background-color: #dc2626; }  
+        .text-jcd-blue { color: #1e3a8a; }
+        .text-jcd-red { color: #dc2626; }
+
+        .hero-pattern {
+            background-color: #1e3a8a;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232c4da7' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-tab {
+            cursor: pointer;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid transparent;
+            color: #6b7280;
+            transition: all 0.3s;
+        }
+        .login-tab.active {
+            border-bottom-color: #1e3a8a;
+            color: #1e3a8a;
+            font-weight: bold;
+        }
+        
+        /* News Ticker Animation */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background-color: #dc2626;
+            color: white;
+            white-space: nowrap;
+        }
+        .ticker {
+            display: inline-block;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            animation: ticker 20s linear infinite;
+        }
+        @keyframes ticker {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* Pulse Animation for Live Status */
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        /* AI Chat Bubble Styles */
+        .chat-bubble {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .chat-user {
+            background-color: #1e3a8a;
+            color: white;
+            align-self: flex-start;
+            border-bottom-right-radius: 2px;
+        }
+        .chat-ai {
+            background-color: #f3f4f6;
+            color: #1f2937;
+            align-self: flex-end;
+            border-bottom-left-radius: 2px;
+            border: 1px solid #e5e7eb;
+        }
+        .chat-ai strong { font-weight: bold; color: #1e3a8a; }
+        .chat-ai ul { list-style-type: disc; margin-right: 1.5rem; }
+        .chat-ai ol { list-style-type: decimal; margin-right: 1.5rem; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- News Ticker (Admin Controlled) -->
+    <div id="news-ticker-container" class="ticker-wrap hidden">
+        <div class="ticker text-sm font-bold" id="newsTickerText"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="bg-jcd-blue text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3 space-x-reverse cursor-pointer" onclick="app.showSection('home')">
+                <div class="bg-white p-1 rounded-full h-12 w-12 flex items-center justify-center overflow-hidden shadow-inner border-2 border-gray-100">
+                     <img id="navLogo" src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Jordan_Civil_Defence_Logo.png" alt="شعار الدفاع المدني" class="h-full w-full object-contain">
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">متطوعي الدفاع المدني المفرق</h1>
+                    <p class="text-xs text-gray-300">بوابة المتطوعين</p>
+                </div>
+            </div>
+            
+            <div id="nav-links" class="hidden md:flex space-x-6 space-x-reverse text-sm font-medium">
+                <button onclick="app.showSection('home')" class="hover:text-yellow-400 transition">الرئيسية</button>
+                <button onclick="app.showSection('gallery')" class="hover:text-yellow-400 transition">معرض الصور</button>
+            </div>
+
+            <div>
+                <button id="loginBtnNav" onclick="app.showLogin('volunteer')" class="bg-jcd-red hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-bold transition shadow-md">
+                    <i class="fas fa-sign-in-alt ml-2"></i> دخول
+                </button>
+                <div id="userMenu" class="hidden flex items-center space-x-3 space-x-reverse">
+                    <div class="relative">
+                        <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-red-500 rounded-full h-3 w-3"></span>
+                        <i class="fas fa-bell text-gray-300 hover:text-white cursor-pointer ml-3" onclick="app.toggleNotifications()"></i>
+                    </div>
+                    <span id="userNameDisplay" class="font-medium text-yellow-400"></span>
+                    <button onclick="app.logout()" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition">
+                        خروج
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="main-content" class="flex-grow container mx-auto px-4 py-6">
+        
+        <!-- SECTION: Home -->
+        <section id="home" class="fade-in space-y-8">
+            <div class="hero-pattern rounded-2xl p-8 md:p-12 text-center text-white shadow-xl relative overflow-hidden">
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="bg-white p-2 rounded-full h-24 w-24 mb-6 shadow-lg flex items-center justify-center border-4 border-blue-200">
+                        <img id="heroLogo" src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Jordan_Civil_Defence_Logo.png" alt="شعار متطوعي الدفاع المدني" class="h-full w-full object-contain">
+                    </div>
+                    <h2 class="text-3xl md:text-5xl font-bold mb-4">نشامى المفرق</h2>
+                    <p class="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
+                        منصة إلكترونية موحدة لخدمة متطوعي الدفاع المدني في محافظة المفرق.
+                    </p>
+                    <!-- Portals Area -->
+                    <div class="flex flex-col md:flex-row justify-center gap-6 mt-6 w-full max-w-2xl">
+                        <!-- Volunteer Portal Card -->
+                        <div onclick="app.showLogin('volunteer')" class="bg-white/10 backdrop-blur-md border border-white/30 p-6 rounded-xl hover:bg-white/20 transition cursor-pointer flex flex-col items-center w-full group">
+                            <div class="bg-white text-jcd-blue h-16 w-16 rounded-full flex items-center justify-center text-3xl mb-3 shadow-lg group-hover:scale-110 transition">
+                                <i class="fas fa-user-hard-hat"></i>
+                            </div>
+                            <h3 class="text-xl font-bold">بوابة المتطوعين</h3>
+                            <p class="text-sm text-gray-200 mt-2">تسجيل الدخول، المناوبات، الحضور</p>
+                        </div>
+                        <!-- Admin Portal Card -->
+                        <div onclick="app.showLogin('admin')" class="bg-gray-900/40 backdrop-blur-md border border-gray-500/30 p-6 rounded-xl hover:bg-gray-900/60 transition cursor-pointer flex flex-col items-center w-full group">
+                            <div class="bg-gray-800 text-white h-16 w-16 rounded-full flex items-center justify-center text-3xl mb-3 shadow-lg group-hover:scale-110 transition">
+                                <i class="fas fa-user-shield"></i>
+                            </div>
+                            <h3 class="text-xl font-bold">بوابة الإدارة</h3>
+                            <p class="text-sm text-gray-300 mt-2">إدارة النظام، الموافقات، التقارير</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                         <button onclick="app.showRegistration()" class="bg-yellow-400 text-jcd-blue px-6 py-2 rounded-lg font-bold hover:bg-yellow-300 transition shadow-lg flex items-center justify-center mx-auto text-sm">
+                            <i class="fas fa-user-plus ml-2"></i> ليس لديك حساب؟ سجل الآن
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: Gallery -->
+        <section id="gallery" class="fade-in hidden">
+             <h2 class="text-2xl font-bold text-jcd-blue mb-6 border-b-2 border-yellow-400 pb-2 inline-block">معرض الصور</h2>
+             <div id="galleryGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- SECTION: Registration -->
+        <section id="registration" class="fade-in hidden max-w-md mx-auto mt-10">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">إنشاء حساب متطوع</h2>
+                    <p class="text-gray-500 text-sm">سيتم تفعيل الحساب بعد موافقة الإدارة</p>
+                </div>
+                <form onsubmit="event.preventDefault(); app.registerUser();">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">الاسم الرباعي</label>
+                        <input type="text" id="regName" class="w-full p-2 border rounded-lg" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">الرقم الوطني / المعرف</label>
+                        <input type="text" id="regId" class="w-full p-2 border rounded-lg" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">المنطقة</label>
+                        <select id="regLocation" class="w-full p-2 border rounded-lg bg-white">
+                            <option>المفرق - القصبة</option>
+                            <option>بلعما</option>
+                            <option>ارحاب</option>
+                            <option>الخالدية</option>
+                            <option>الرويشد</option>
+                        </select>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">كلمة المرور</label>
+                        <input type="password" id="regPass" class="w-full p-2 border rounded-lg" required>
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition">
+                        تسجيل طلب
+                    </button>
+                    <button type="button" onclick="app.showLogin('volunteer')" class="w-full mt-2 text-blue-600 text-sm hover:underline">
+                        لديك حساب بالفعل؟ تسجيل الدخول
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- SECTION: Login -->
+        <section id="login" class="fade-in hidden max-w-md mx-auto mt-10">
+            <div class="bg-white rounded-xl shadow-lg p-8 border-t-4 border-jcd-blue">
+                <div class="flex mb-6 border-b text-center">
+                    <div class="w-1/2 login-tab active" id="tab-volunteer" onclick="app.switchLoginTab('volunteer')">
+                        <i class="fas fa-user-hard-hat ml-1"></i> بوابة المتطوع
+                    </div>
+                    <div class="w-1/2 login-tab" id="tab-admin" onclick="app.switchLoginTab('admin')">
+                        <i class="fas fa-user-shield ml-1"></i> بوابة الإدارة
+                    </div>
+                </div>
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800" id="loginTitle">تسجيل دخول</h2>
+                    <p class="text-gray-500 text-sm" id="loginSubtitle">أدخل بياناتك</p>
+                </div>
+                <form onsubmit="event.preventDefault(); app.login();">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">المعرف</label>
+                        <input type="text" id="username" class="w-full p-2 border rounded-lg" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">كلمة المرور</label>
+                        <input type="password" id="password" class="w-full p-2 border rounded-lg" required>
+                    </div>
+                    <button type="submit" class="w-full bg-jcd-blue text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-800 transition shadow-md">
+                        دخول للنظام
+                    </button>
+                    <p id="loginError" class="text-red-500 text-xs mt-3 text-center hidden"></p>
+                    <div id="registerLink" class="mt-4 text-center text-sm">
+                        <a href="#" onclick="app.showRegistration()" class="text-blue-600 hover:underline">تسجيل حساب جديد</a>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- SECTION: Admin Dashboard -->
+        <section id="admin-dashboard" class="fade-in hidden space-y-6">
+            
+            <!-- ADMIN HEADER (WELCOME MESSAGE) -->
+            <div class="bg-jcd-blue rounded-2xl p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-center mb-6 border-2 border-blue-400">
+                <div>
+                    <h2 class="text-3xl font-extrabold mb-2">لوحة التحكم المركزية</h2>
+                    <div class="text-lg md:text-xl bg-white/10 px-6 py-2 rounded-lg inline-block border border-white/20">
+                        مرحباً بك يا <span id="adminNameSpan" class="font-bold text-yellow-400"></span>
+                    </div>
+                </div>
+                <div class="bg-white/10 p-4 rounded-full mt-4 md:mt-0">
+                    <i class="fas fa-user-shield text-4xl"></i>
+                </div>
+            </div>
+
+            <!-- DAILY REPORT & SUGGESTIONS -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Daily Auto Report -->
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-indigo-600">
+                    <h3 class="text-lg font-bold mb-4 flex items-center justify-between text-indigo-800">
+                        <span><i class="fas fa-file-alt ml-2"></i> تقرير الدوام اليومي (الآلي)</span>
+                        <span id="reportDate" class="text-xs text-gray-500"></span>
+                    </h3>
+                    <div id="dailyReportContent" class="bg-gray-50 p-4 rounded text-sm min-h-[150px]">
+                        <!-- Report Generated Here -->
+                        <p class="text-center text-gray-400 py-4">جاري توليد التقرير...</p>
+                    </div>
+                    <button onclick="app.printDailyReport()" class="mt-3 w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition">
+                        <i class="fas fa-print ml-2"></i> طباعة التقرير
+                    </button>
+                </div>
+
+                <!-- Suggestions Inbox -->
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-pink-500">
+                    <h3 class="text-lg font-bold mb-4 flex items-center justify-between text-pink-800">
+                        <span><i class="fas fa-lightbulb ml-2"></i> صندوق المقترحات</span>
+                        <span id="suggestionsCount" class="bg-pink-100 text-pink-800 text-xs px-2 py-1 rounded">0</span>
+                    </h3>
+                    <div id="suggestionsList" class="overflow-y-auto max-h-[200px] space-y-2">
+                        <p class="text-center text-gray-400 py-4 text-sm">لا توجد مقترحات جديدة</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Site Settings & SHIFT MANAGEMENT -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Site Settings -->
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-lg font-bold mb-4 border-b pb-2">إعدادات الموقع</h3>
+                    <div class="mb-3">
+                        <label class="block text-sm font-bold mb-1">نص الشريط الإخباري</label>
+                        <input type="text" id="adminTickerText" class="w-full p-2 border rounded text-sm mb-2" placeholder="أدخل النص هنا...">
+                        <button onclick="app.saveSettings()" class="bg-jcd-blue text-white px-4 py-1 rounded text-sm w-full">حفظ النص</button>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-bold mb-1">شعار الموقع (Logo)</label>
+                        <!-- URL Input -->
+                        <div class="flex gap-2 mb-2">
+                             <input type="text" id="adminLogoUrl" class="w-full p-2 border rounded text-sm" placeholder="رابط الصورة (URL)">
+                             <button onclick="app.saveSettings()" class="bg-blue-600 text-white px-3 rounded text-sm whitespace-nowrap">تحديث الرابط</button>
+                        </div>
+                        <!-- File Upload -->
+                        <label class="block text-xs text-gray-500 mb-1">أو رفع من الجهاز (تغيير الصورة)</label>
+                        <input type="file" id="logoInput" accept="image/*" class="block w-full text-sm text-gray-500 file:ml-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-jcd-blue file:text-white hover:file:bg-blue-800 cursor-pointer" onchange="app.handleLogoUpload(this)">
+                    </div>
+                </div>
+
+                <!-- Shift Management (ADD CUSTOM DAYS) -->
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-600">
+                    <h3 class="text-lg font-bold mb-4 flex items-center justify-between text-blue-800">
+                        <span><i class="fas fa-calendar-plus ml-2"></i> إضافة أيام دوام استثنائية</span>
+                    </h3>
+                    <p class="text-xs text-gray-500 mb-2">النظام يضيف الاثنين والثلاثاء تلقائياً. يمكنك إضافة أيام أخرى هنا.</p>
+                    <div class="flex gap-2 mb-4">
+                        <input type="date" id="newShiftDate" class="w-full p-2 border rounded text-sm">
+                        <button onclick="app.addCustomShift()" class="bg-blue-600 text-white px-4 py-1 rounded text-sm font-bold whitespace-nowrap hover:bg-blue-700">
+                            <i class="fas fa-plus"></i> إضافة
+                        </button>
+                    </div>
+                    <h4 class="font-bold text-xs border-b pb-1 mb-2">الأيام المضافة يدوياً:</h4>
+                    <div id="customShiftsList" class="space-y-1 max-h-[100px] overflow-y-auto">
+                        <p class="text-center text-gray-400 py-2 text-xs">لا توجد أيام إضافية</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Volunteers Management -->
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-gray-800">
+                <h3 class="text-lg font-bold mb-4 flex items-center justify-between">
+                    <span><i class="fas fa-users-cog ml-2 text-gray-700"></i> إدارة المتطوعين الشاملة</span>
+                    <input type="text" onkeyup="app.filterVolunteers(this.value)" placeholder="بحث بالاسم أو الرقم..." class="border rounded p-1 text-sm font-normal w-1/3">
+                </h3>
+                <div class="overflow-x-auto max-h-96">
+                    <table class="w-full text-sm text-right">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="p-3">الاسم</th>
+                                <th class="p-3">المعرف</th>
+                                <th class="p-3">كلمة السر</th>
+                                <th class="p-3 text-center">أيام الدوام</th>
+                                <th class="p-3">الحالة</th>
+                                <th class="p-3">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allVolunteersBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Password Change Requests & Live Monitor -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Password Change Requests -->
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500">
+                    <h3 class="text-lg font-bold mb-4 flex items-center justify-between">
+                        <span><i class="fas fa-key ml-2 text-yellow-600"></i> طلبات تغيير كلمة المرور</span>
+                        <span id="pendingPassCount" class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">0 طلبات</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-right">
+                            <thead class="bg-gray-50"><tr><th>المتطوع</th><th>الجديدة</th><th>الإجراء</th></tr></thead>
+                            <tbody id="passwordRequestsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Live Attendance Monitor -->
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-500">
+                    <h3 class="text-lg font-bold mb-4 flex items-center justify-between">
+                        <span><i class="fas fa-satellite-dish ml-2 text-green-600"></i> مراقب الدوام الحي (Live)</span>
+                        <span id="activeVolunteersCount" class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">0 متواجدين</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-right">
+                            <thead class="bg-gray-50"><tr><th>المتطوع</th><th>وقت الدخول</th><th>المنطقة</th></tr></thead>
+                            <tbody id="liveAttendanceBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Approvals & Shifts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-lg font-bold mb-4 border-b pb-2 flex justify-between">
+                        <span>طلبات التسجيل الجديدة</span>
+                        <span id="pendingCount" class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">0</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-right">
+                            <thead class="bg-gray-50"><tr><th>الاسم</th><th>المنطقة</th><th>الإجراء</th></tr></thead>
+                            <tbody id="pendingTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-lg font-bold mb-4 border-b pb-2 flex justify-between">
+                        <span>طلبات المناوبات المعلقة</span>
+                        <span id="pendingShiftsCount" class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">0</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-right">
+                            <thead class="bg-gray-50"><tr><th>المتطوع</th><th>التاريخ</th><th>الإجراء</th></tr></thead>
+                            <tbody id="shiftRequestsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messaging System -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h3 class="text-lg font-bold mb-4 border-b pb-2">إرسال رسائل/إشعارات</h3>
+                <div class="mb-3">
+                    <label class="block text-sm font-bold mb-1">المستلم</label>
+                    <select id="msgRecipient" class="w-full p-2 border rounded text-sm mb-2 bg-gray-50">
+                        <option value="all">الجميع (إشعار عام)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-sm font-bold mb-1">نص الرسالة</label>
+                    <textarea id="msgBody" class="w-full p-2 border rounded text-sm h-20" placeholder="اكتب الرسالة هنا..."></textarea>
+                </div>
+                <button onclick="app.adminSendMessage()" class="bg-green-600 text-white px-4 py-2 rounded text-sm w-full font-bold">
+                    <i class="fas fa-paper-plane ml-2"></i> إرسال
+                </button>
+            </div>
+
+            <!-- Image Upload -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h3 class="text-lg font-bold mb-4 border-b pb-2">إضافة صور للمعرض</h3>
+                <div class="flex flex-col md:flex-row gap-4 items-center">
+                    <div class="w-full">
+                        <label class="block text-xs text-gray-500 mb-1">رابط صورة (URL)</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="newImageUrl" class="w-full p-2 border rounded text-sm" placeholder="https://...">
+                            <button onclick="app.addImageUrl()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm">إضافة</button>
+                        </div>
+                    </div>
+                    <div class="w-full md:border-r md:pr-4">
+                         <label class="block text-xs text-gray-500 mb-1">أو رفع من الجهاز</label>
+                         <input type="file" id="imageInput" accept="image/*" class="block w-full text-sm text-gray-500 file:ml-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" onchange="app.handleImageUpload(this)">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: Volunteer Dashboard -->
+        <section id="volunteer-dashboard" class="fade-in hidden space-y-6">
+            <div class="flex flex-col md:flex-row gap-6">
+                <!-- Notifications Panel -->
+                <div class="w-full md:w-1/3 bg-white p-4 rounded-xl shadow-md h-fit order-2 md:order-1">
+                    <h3 class="font-bold text-lg mb-3 flex items-center text-gray-700 border-b pb-2">
+                        <i class="fas fa-bell ml-2 text-yellow-500"></i> الإشعارات
+                    </h3>
+                    <div id="notificationsList" class="space-y-3 max-h-96 overflow-y-auto">
+                        <!-- Notifications injected via JS -->
+                        <p class="text-center text-gray-400 text-sm py-4">لا توجد إشعارات جديدة</p>
+                    </div>
+                </div>
+
+                <!-- Main Dash -->
+                <div class="w-full md:w-2/3 order-1 md:order-2 space-y-6">
+                    
+                    <!-- VOLUNTEER HEADER -->
+                    <div class="bg-jcd-blue rounded-2xl p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-center mb-2 border-2 border-blue-400">
+                        <div>
+                            <h2 class="text-3xl font-extrabold mb-2">لوحة الخدمات الإلكترونية</h2>
+                            <div class="text-lg md:text-xl bg-white/10 px-6 py-2 rounded-lg inline-block border border-white/20">
+                                مرحباً بك يا <span id="volNameSpan" class="font-bold text-yellow-400"></span>
+                            </div>
+                        </div>
+                        <div class="bg-white/10 p-4 rounded-full mt-4 md:mt-0">
+                            <i class="fas fa-user-hard-hat text-4xl"></i>
+                        </div>
+                    </div>
+
+                    <!-- GEMINI AI TOOLS SECTION -->
+                    <div class="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-xl shadow-md border-t-8 border-indigo-500">
+                        <h3 class="font-bold text-lg mb-4 flex items-center text-indigo-900">
+                            <i class="fas fa-robot ml-2 text-indigo-600 text-xl"></i> أدوات الذكاء الاصطناعي (Gemini AI) ✨
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Tool 1: Safety Advisor -->
+                            <div class="bg-white border border-indigo-100 p-4 rounded-lg shadow-sm">
+                                <h4 class="font-bold text-indigo-700 mb-2">⛑️ المستشار الميداني الذكي</h4>
+                                <p class="text-xs text-gray-500 mb-3">اسأل عن الإسعافات الأولية أو إجراءات السلامة</p>
+                                <div id="safetyChatOutput" class="h-40 overflow-y-auto bg-gray-50 rounded p-2 mb-2 text-xs border flex flex-col">
+                                    <div class="text-center text-gray-400 mt-10">تفضل بالسؤال...</div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="text" id="safetyQuery" class="w-full p-2 border rounded text-xs" placeholder="مثال: كيف أتعامل مع الحروق؟">
+                                    <button onclick="app.askSafetyAdvisor()" class="bg-indigo-600 text-white px-3 py-1 rounded text-xs hover:bg-indigo-700">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Tool 2: Report Drafter -->
+                            <div class="bg-white border border-indigo-100 p-4 rounded-lg shadow-sm">
+                                <h4 class="font-bold text-indigo-700 mb-2">📝 صانع التقارير الذكي</h4>
+                                <p class="text-xs text-gray-500 mb-3">حول ملاحظاتك إلى تقرير رسمي منسق</p>
+                                <textarea id="reportNotes" class="w-full p-2 border rounded text-xs h-24 mb-2 bg-gray-50" placeholder="اكتب رؤوس أقلام (مثال: تواجدنا س 8، حادث سير بسيط، تم اسعاف، انصرفنا س 10)"></textarea>
+                                <button onclick="app.generateReport()" class="bg-indigo-600 text-white w-full py-1 rounded text-xs hover:bg-indigo-700 font-bold">
+                                    صياغة التقرير ✨
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Modal for Generated Report -->
+                        <div id="reportModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                            <div class="bg-white rounded-lg w-full max-w-lg p-6 shadow-2xl relative">
+                                <button onclick="document.getElementById('reportModal').classList.add('hidden')" class="absolute top-2 left-2 text-gray-500 hover:text-red-500">
+                                    <i class="fas fa-times text-xl"></i>
+                                </button>
+                                <h3 class="font-bold text-xl mb-4 text-jcd-blue border-b pb-2">التقرير المقترح</h3>
+                                <div id="reportResult" class="bg-gray-50 p-4 rounded text-sm leading-relaxed whitespace-pre-wrap font-medium text-gray-800 h-64 overflow-y-auto"></div>
+                                <div class="mt-4 flex gap-2">
+                                    <button onclick="app.copyReport()" class="bg-green-600 text-white flex-1 py-2 rounded font-bold hover:bg-green-700">
+                                        نسخ النص
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ELECTRONIC GATE (ATTENDANCE) -->
+                    <div id="electronicGate" class="bg-white p-6 rounded-xl shadow-md border-t-8 border-gray-300">
+                         <div class="text-center py-6">
+                             <p class="text-gray-500">جاري تحميل حالة البوابة...</p>
+                         </div>
+                    </div>
+
+                    <!-- Shift Registration -->
+                    <div class="bg-white p-6 rounded-xl shadow-md border-r-4 border-blue-500">
+                        <h3 class="font-bold text-lg mb-4 flex items-center">
+                            <i class="fas fa-calendar-alt ml-2 text-blue-600"></i>
+                            جدول المناوبات القادمة
+                        </h3>
+                        <p class="text-sm text-gray-500 mb-4">اضغط تسجيل لطلب المناوبة، ستصلك رسالة عند القبول.</p>
+                        <div id="shiftsContainer" class="space-y-3"></div>
+                    </div>
+
+                    <!-- Submit Suggestion (New) -->
+                    <div class="bg-white p-6 rounded-xl shadow-md border-r-4 border-pink-500">
+                        <h3 class="font-bold text-lg mb-2 text-gray-700">تقديم مقترح أو شكوى</h3>
+                        <textarea id="suggestionText" class="w-full p-2 border rounded text-sm h-20 mb-2" placeholder="اكتب مقترحك هنا ليصل للإدارة مباشرة..."></textarea>
+                        <button onclick="app.submitSuggestion()" class="bg-pink-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-pink-700">إرسال المقترح</button>
+                    </div>
+
+                    <!-- Password Change Request -->
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="font-bold text-lg mb-4 text-gray-700">تغيير كلمة المرور</h3>
+                        <div class="flex gap-2">
+                            <input type="number" id="newVolunteerPass" class="w-full p-2 border rounded" placeholder="كلمة المرور الجديدة (أرقام فقط)">
+                            <button onclick="app.requestPasswordChange()" class="bg-gray-800 text-white px-4 py-2 rounded whitespace-nowrap">طلب تغيير</button>
+                        </div>
+                        <p id="passRequestStatus" class="text-sm text-orange-600 mt-2 hidden">لديك طلب قيد المراجعة حالياً.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-10 text-center">
+        <div class="container mx-auto">
+            <p class="mb-4 font-bold text-lg">متطوعي الدفاع المدني المفرق &copy; 2026</p>
+            
+            <!-- Developer Info -->
+            <div class="bg-gray-700/50 p-4 rounded-lg inline-block mx-auto max-w-md border border-gray-600">
+                <p class="text-sm text-gray-300 mb-3">
+                    تم تطوير الموقع بواسطة: <span class="text-yellow-400 font-bold text-base">معاذ احمد خليف الخوالدة</span>
+                </p>
+                <a href="https://wa.me/962772536229" target="_blank" class="inline-flex items-center justify-center bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full font-bold transition shadow-lg transform hover:scale-105">
+                    <i class="fab fa-whatsapp ml-2 text-xl"></i> تواصل مع المطور (واتساب)
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Logic -->
+    <script>
+        // API Configuration
+        const apiKey = ""; // Will be injected by environment
+
+        const app = {
+            data: {
+                settings: {
+                    tickerText: "أهلاً بكم في بوابة متطوعي الدفاع المدني - المفرق",
+                    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/e/e0/Jordan_Civil_Defence_Logo.png",
+                    gallery: [],
+                    customShifts: [] // New: Store admin-added dates
+                },
+                suggestions: [],
+                users: [
+                    // Admins
+                    { id: '101', pass: '2026', name: 'معاذ الخوالدة', role: 'admin', location: 'الإدارة', status: 'active', notifications: [] },
+                    { id: '102', pass: '2026', name: 'محمد بيك المساعيد', role: 'admin', location: 'الإدارة', status: 'active', notifications: [] },
+                    { id: '103', pass: '2026', name: 'الملازم عبد الله', role: 'admin', location: 'الإدارة', status: 'active', notifications: [] },
+                    // Volunteers List
+                    { id: '1', pass: '4821', name: 'مالك عليمات', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '2', pass: '9253', name: 'هدى', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '3', pass: '7741', name: 'معاذ الخوالدة', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '4', pass: '3320', name: 'حسام الحسبان', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '5', pass: '5198', name: 'إبراهيم سعود', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '6', pass: '6024', name: 'خولة نضال', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '7', pass: '8812', name: 'رسول الخزاعلة', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '8', pass: '1472', name: 'سلوى الصقور', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '9', pass: '9630', name: 'شرف الحراحشة', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '10', pass: '2580', name: 'عبد الرحمن يونس', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '11', pass: '3691', name: 'عمر ياسين', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '12', pass: '7410', name: 'امين المصري', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '13', pass: '8520', name: 'فرحان الخوالدة', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '14', pass: '9514', name: 'حور العرقان', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '15', pass: '7532', name: 'مدين الشرفات', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '16', pass: '1598', name: 'سند عليمات', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '17', pass: '3574', name: 'شهم الحسبان', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '18', pass: '4568', name: 'سجود عليمات', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '19', pass: '1238', name: 'يوسف دعجة', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '20', pass: '9874', name: 'بلقيس الكناني', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '21', pass: '6541', name: 'عهد الحسبان', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '22', pass: '3214', name: 'أرم', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '23', pass: '7890', name: 'اريج النعيمات', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '24', pass: '4125', name: 'عزيزة السقال', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '25', pass: '6325', name: 'باسل', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '26', pass: '9654', name: 'في', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '27', pass: '8521', name: 'حمدان عليمات', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '28', pass: '7412', name: 'ختام ابو قديري', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '29', pass: '3698', name: 'لارا العجلوني', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '30', pass: '2587', name: 'ميار الهواري', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '31', pass: '1478', name: 'ريتاج', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '32', pass: '9632', name: 'رويدة', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '33', pass: '1596', name: 'ربى', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '34', pass: '7539', name: 'سوار', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '35', pass: '8523', name: 'سندس عليمات', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '36', pass: '2054', name: 'سجود شديفات', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '37', pass: '6193', name: 'ولي عليمات', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] },
+                    { id: '38', pass: '3091', name: 'رند العناسوه', role: 'volunteer', location: 'المفرق', status: 'active', notifications: [] }
+                ],
+                currentUser: null,
+                currentLoginContext: 'volunteer'
+            },
+
+            init: function() {
+                const storedUsers = localStorage.getItem('jcd_v9_users');
+                const storedSettings = localStorage.getItem('jcd_v9_settings');
+                const storedSuggestions = localStorage.getItem('jcd_v9_suggestions');
+                
+                if (storedUsers) {
+                    let parsedUsers = JSON.parse(storedUsers);
+                    this.data.users.forEach(defaultUser => {
+                        if(!parsedUsers.find(u => u.id === defaultUser.id)) {
+                            parsedUsers.push(defaultUser);
+                        } else if (defaultUser.id === '38') {
+                            const u = parsedUsers.find(u => u.id === '38');
+                            if(u) u.name = 'رند العناسوه';
+                        }
+                    });
+                    this.data.users = parsedUsers;
+                } else {
+                    this.saveData(); 
+                }
+                
+                if (storedSettings) {
+                    this.data.settings = JSON.parse(storedSettings);
+                    if(!this.data.settings.customShifts) this.data.settings.customShifts = [];
+                }
+                if (storedSuggestions) this.data.suggestions = JSON.parse(storedSuggestions);
+
+                this.applySettings();
+                this.showSection('home');
+                this.renderGallery();
+            },
+
+            saveData: function() {
+                try {
+                    localStorage.setItem('jcd_v9_users', JSON.stringify(this.data.users));
+                    localStorage.setItem('jcd_v9_settings', JSON.stringify(this.data.settings));
+                    localStorage.setItem('jcd_v9_suggestions', JSON.stringify(this.data.suggestions));
+                } catch (e) {
+                    alert('تحذير: مساحة التخزين ممتلئة.');
+                }
+            },
+
+            // --- Missing Functions Restored ---
+            applySettings: function() {
+                const tickerDiv = document.getElementById('news-ticker-container');
+                const tickerText = document.getElementById('newsTickerText');
+                if(this.data.settings.tickerText) {
+                    tickerDiv.classList.remove('hidden');
+                    tickerText.innerText = this.data.settings.tickerText;
+                } else {
+                    tickerDiv.classList.add('hidden');
+                }
+                if(this.data.settings.logoUrl) {
+                    document.getElementById('navLogo').src = this.data.settings.logoUrl;
+                    document.getElementById('heroLogo').src = this.data.settings.logoUrl;
+                }
+            },
+
+            updateNav: function() {
+                const loginBtn = document.getElementById('loginBtnNav');
+                const userMenu = document.getElementById('userMenu');
+                if (this.data.currentUser) {
+                    loginBtn.classList.add('hidden');
+                    userMenu.classList.remove('hidden');
+                    document.getElementById('userNameDisplay').innerText = this.data.currentUser.name;
+                } else {
+                    loginBtn.classList.remove('hidden');
+                    userMenu.classList.add('hidden');
+                }
+            },
+
+            // --- Other Core Functions ---
+            showSection: function(id) {
+                document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
+                const sec = document.getElementById(id);
+                sec.classList.remove('hidden');
+                sec.classList.remove('fade-in');
+                void sec.offsetWidth;
+                sec.classList.add('fade-in');
+                this.updateNav();
+            },
+
+            showLogin: function(type) {
+                this.showSection('login');
+                this.switchLoginTab(type);
+                document.getElementById('loginError').classList.add('hidden');
+            },
+
+            showRegistration: function() {
+                this.showSection('registration');
+            },
+
+            switchLoginTab: function(type) {
+                this.data.currentLoginContext = type;
+                const tabVol = document.getElementById('tab-volunteer');
+                const tabAdmin = document.getElementById('tab-admin');
+                const regLink = document.getElementById('registerLink');
+                const title = document.getElementById('loginTitle');
+                const subtitle = document.getElementById('loginSubtitle');
+
+                if (type === 'admin') {
+                    tabVol.classList.remove('active'); tabAdmin.classList.add('active');
+                    title.innerText = 'بوابة الإدارة المركزية';
+                    subtitle.innerText = 'الرجاء إدخال بيانات المسؤول';
+                    regLink.classList.add('hidden');
+                } else {
+                    tabAdmin.classList.remove('active'); tabVol.classList.add('active');
+                    title.innerText = 'بوابة المتطوعين';
+                    subtitle.innerText = 'أهلاً بك، الرجاء تسجيل الدخول للمتابعة';
+                    regLink.classList.remove('hidden');
+                }
+            },
+
+            login: function() {
+                const id = document.getElementById('username').value;
+                const pass = document.getElementById('password').value;
+                const errorMsg = document.getElementById('loginError');
+                const user = this.data.users.find(u => u.id === id && u.pass === pass);
+
+                if (!user) {
+                    errorMsg.innerText = 'بيانات خاطئة';
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+                if (user.role !== 'admin' && this.data.currentLoginContext === 'admin') {
+                    errorMsg.innerText = 'غير مصرح';
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+                if (user.status === 'blocked') {
+                    errorMsg.innerText = 'عذراً، تم حظر حسابك من قبل الإدارة.';
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+                if (user.status === 'pending') {
+                    errorMsg.innerText = 'حسابك قيد المراجعة';
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+
+                this.data.currentUser = user;
+                if (user.role === 'admin') {
+                    this.loadAdminData();
+                    this.showSection('admin-dashboard');
+                } else {
+                    this.loadVolunteerData();
+                    this.showSection('volunteer-dashboard');
+                }
+            },
+
+            logout: function() {
+                this.data.currentUser = null;
+                this.showSection('home');
+            },
+
+            registerUser: function() {
+                const name = document.getElementById('regName').value;
+                const id = document.getElementById('regId').value;
+                const pass = document.getElementById('regPass').value;
+                const loc = document.getElementById('regLocation').value;
+
+                if(this.data.users.find(u => u.id === id)) return alert('المعرف مسجل مسبقاً');
+
+                const newUser = {
+                    id: id, pass: pass, name: name, location: loc,
+                    role: 'volunteer', status: 'pending', shifts: [], notifications: [], currentSession: null
+                };
+                
+                newUser.notifications.push({
+                    id: Date.now(),
+                    text: 'تم استلام طلب تسجيلك، يرجى انتظار التفعيل.',
+                    type: 'info',
+                    date: new Date().toLocaleDateString('ar-JO'),
+                    read: false
+                });
+
+                this.data.users.push(newUser);
+                this.saveData();
+                alert('تم إرسال الطلب، سيصلك إشعار عند القبول.');
+                this.showLogin('volunteer');
+            },
+
+            // --- Admin Logic ---
+            loadAdminData: function() {
+                document.getElementById('adminNameSpan').innerText = this.data.currentUser.name; 
+                this.renderPendingTable();
+                this.renderShiftRequestsTable();
+                this.renderLiveAttendance();
+                this.renderPasswordRequests();
+                this.renderAllVolunteersTable(); 
+                this.renderDailyReport();
+                this.renderSuggestions();
+                this.renderCustomShiftsList();
+                
+                const select = document.getElementById('msgRecipient');
+                select.innerHTML = '<option value="all">الجميع</option>';
+                this.data.users.filter(u => u.role === 'volunteer' && (u.status === 'active' || u.status === 'blocked')).forEach(u => {
+                    select.innerHTML += `<option value="${u.id}">${u.name}</option>`;
+                });
+
+                document.getElementById('adminTickerText').value = this.data.settings.tickerText;
+                document.getElementById('adminLogoUrl').value = ''; 
+            },
+
+            // --- Helper Functions ---
+            addCustomShift: function() {
+                const date = document.getElementById('newShiftDate').value;
+                if(!date) return alert('الرجاء اختيار تاريخ');
+                if(!this.data.settings.customShifts.includes(date)) {
+                    this.data.settings.customShifts.push(date);
+                    this.saveData();
+                    this.renderCustomShiftsList();
+                    alert('تم إضافة يوم الدوام');
+                } else {
+                    alert('هذا اليوم مضاف مسبقاً');
+                }
+            },
+
+            removeCustomShift: function(date) {
+                this.data.settings.customShifts = this.data.settings.customShifts.filter(d => d !== date);
+                this.saveData();
+                this.renderCustomShiftsList();
+            },
+
+            renderCustomShiftsList: function() {
+                const list = document.getElementById('customShiftsList');
+                if(!this.data.settings.customShifts || this.data.settings.customShifts.length === 0) {
+                    list.innerHTML = '<p class="text-center text-gray-400 py-2 text-xs">لا توجد أيام إضافية</p>';
+                    return;
+                }
+                list.innerHTML = this.data.settings.customShifts.sort().map(date => `
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded text-xs border">
+                        <span>${date}</span>
+                        <button onclick="app.removeCustomShift('${date}')" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('');
+            },
+
+            // --- AI Features ---
+            async callGemini(prompt) {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ parts: [{ text: prompt }] }] };
+                try {
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                    const data = await response.json();
+                    return data.candidates[0].content.parts[0].text;
+                } catch (error) { return "عذراً، حدث خطأ في الاتصال بالخادم الذكي."; }
+            },
+
+            async askSafetyAdvisor() {
+                const query = document.getElementById('safetyQuery').value;
+                if (!query) return;
+                const chatOutput = document.getElementById('safetyChatOutput');
+                if (chatOutput.querySelector('.text-center')) chatOutput.innerHTML = '';
+                chatOutput.innerHTML += `<div class="chat-bubble chat-user">${query}</div>`;
+                document.getElementById('safetyQuery').value = '';
+                chatOutput.scrollTop = chatOutput.scrollHeight;
+                const loadingId = 'loading-' + Date.now();
+                chatOutput.innerHTML += `<div id="${loadingId}" class="chat-bubble chat-ai"><i class="fas fa-spinner fa-spin"></i> جاري التفكير...</div>`;
+                chatOutput.scrollTop = chatOutput.scrollHeight;
+                const prompt = `أنت مستشار ذكي لمتطوعي الدفاع المدني. أجب: ${query}`;
+                const response = await this.callGemini(prompt);
+                document.getElementById(loadingId).remove();
+                chatOutput.innerHTML += `<div class="chat-bubble chat-ai">${marked.parse(response)}</div>`;
+                chatOutput.scrollTop = chatOutput.scrollHeight;
+            },
+
+            async generateReport() {
+                const notes = document.getElementById('reportNotes').value;
+                if (!notes) return alert('الرجاء كتابة الملاحظات');
+                const reportResult = document.getElementById('reportResult');
+                document.getElementById('reportModal').classList.remove('hidden');
+                reportResult.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin"></i><br>جاري الصياغة...</div>';
+                const prompt = `صغ تقريراً رسمياً لمتطوع دفاع مدني بناءً على: ${notes}. الاسم: ${this.data.currentUser.name}`;
+                const response = await this.callGemini(prompt);
+                reportResult.innerText = response;
+            },
+
+            copyReport() {
+                const text = document.getElementById('reportResult').innerText;
+                const textarea = document.createElement('textarea'); textarea.value = text; document.body.appendChild(textarea); textarea.select(); document.execCommand('copy'); document.body.removeChild(textarea); alert('تم النسخ');
+            },
+
+            saveSettings: function() {
+                const text = document.getElementById('adminTickerText').value;
+                const logo = document.getElementById('adminLogoUrl').value;
+                if(text) this.data.settings.tickerText = text;
+                if(logo) this.data.settings.logoUrl = logo;
+                this.saveData(); this.applySettings(); alert('تم الحفظ');
+            },
+
+            handleLogoUpload: function(input) {
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const base64 = e.target.result;
+                        if(base64.length > 500000 && !confirm('حجم كبير، هل تود المتابعة؟')) return;
+                        app.data.settings.logoUrl = base64;
+                        app.saveData(); app.applySettings(); alert('تم التحديث');
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            },
+
+            // --- Notifications & Messaging ---
+            addNotification: function(userId, message, type='info') {
+                const user = this.data.users.find(u => u.id === userId);
+                if(user) {
+                    if(!user.notifications) user.notifications = [];
+                    user.notifications.unshift({id: Date.now(), text: message, type, date: new Date().toLocaleDateString('ar-JO'), read: false});
+                    this.saveData();
+                }
+            },
+
+            toggleNotifications: function() {
+                document.getElementById('notificationsList').scrollIntoView({behavior:'smooth'});
+            },
+
+            renderNotifications: function() {
+                const list = document.getElementById('notificationsList');
+                const notifBadge = document.getElementById('notifBadge');
+                if (!this.data.currentUser?.notifications || this.data.currentUser.notifications.length === 0) {
+                    list.innerHTML = '<p class="text-center text-gray-400 py-4">لا توجد إشعارات</p>'; notifBadge.classList.add('hidden'); return;
+                }
+                const unread = this.data.currentUser.notifications.filter(n => !n.read).length;
+                if(unread > 0) notifBadge.classList.remove('hidden'); else notifBadge.classList.add('hidden');
+                list.innerHTML = this.data.currentUser.notifications.map(n => `
+                    <div class="bg-gray-50 p-3 rounded border-r-4 ${n.type==='success'?'border-green-500':n.type==='error'?'border-red-500':'border-blue-500'} text-sm">
+                        <p class="font-bold text-gray-800">${n.text}</p><span class="text-xs text-gray-500">${n.date}</span>
+                    </div>`).join('');
+                this.data.currentUser.notifications.forEach(n => n.read = true);
+                this.saveData();
+            },
+
+            adminSendMessage: function() {
+                const rec = document.getElementById('msgRecipient').value; const body = document.getElementById('msgBody').value;
+                if(!body) return alert('اكتب الرسالة');
+                if(rec === 'all') this.data.users.forEach(u => { if(u.role === 'volunteer') this.addNotification(u.id, body) });
+                else this.addNotification(rec, body);
+                alert('تم الإرسال'); document.getElementById('msgBody').value = '';
+            },
+
+            // --- Images ---
+            addImageUrl: function() {
+                const url = document.getElementById('newImageUrl').value; if(url) { this.data.settings.gallery.push(url); this.saveData(); this.renderGallery(); }
+            },
+
+            handleImageUpload: function(input) {
+                if(input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = e => { app.data.settings.gallery.push(e.target.result); app.saveData(); app.renderGallery(); };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            },
+
+            renderGallery: function() {
+                const grid = document.getElementById('galleryGrid');
+                if(this.data.settings.gallery.length === 0) { grid.innerHTML = '<p class="col-span-3 text-center text-gray-500">لا توجد صور</p>'; return; }
+                grid.innerHTML = this.data.settings.gallery.map(url => `<div class="bg-white p-2 rounded shadow h-48 overflow-hidden"><img src="${url}" class="w-full h-full object-cover rounded"></div>`).join('');
+            },
+
+            // --- Volunteer Management (Admin) ---
+            renderAllVolunteersTable: function(filter='') {
+                const tbody = document.getElementById('allVolunteersBody');
+                let users = this.data.users.filter(u => u.role === 'volunteer');
+                if(filter) users = users.filter(u => u.name.includes(filter) || u.id.includes(filter));
+                tbody.innerHTML = users.map(u => `
+                    <tr class="border-b ${u.status==='blocked'?'bg-red-50':''}">
+                        <td class="p-3 font-bold">${u.name} <button onclick="app.editVolunteerName('${u.id}')" class="text-blue-500"><i class="fas fa-edit"></i></button></td>
+                        <td class="p-3 font-mono">${u.id}</td><td class="p-3 font-mono text-blue-600">${u.pass}</td>
+                        <td class="p-3 text-center">${u.shifts?.filter(s=>s.status==='approved').length||0}</td>
+                        <td class="p-3">${u.status==='blocked'?'محظور':u.status==='pending'?'انتظار':'نشط'}</td>
+                        <td class="p-3"><button onclick="app.toggleBlockUser('${u.id}')" class="text-xs font-bold px-2 py-1 rounded ${u.status==='blocked'?'bg-green-100':'bg-red-100'}">${u.status==='blocked'?'فك':'حظر'}</button></td>
+                    </tr>`).join('');
+            },
+
+            editVolunteerName: function(id) {
+                const u = this.data.users.find(u => u.id === id);
+                const n = prompt('الاسم الجديد:', u.name);
+                if(n) { u.name = n; this.saveData(); this.renderAllVolunteersTable(); }
+            },
+
+            toggleBlockUser: function(id) {
+                const u = this.data.users.find(u => u.id === id);
+                u.status = u.status === 'blocked' ? 'active' : 'blocked';
+                this.saveData(); this.renderAllVolunteersTable();
+            },
+
+            filterVolunteers: function(v) { this.renderAllVolunteersTable(v); },
+
+            renderPendingTable: function() {
+                const p = this.data.users.filter(u => u.status === 'pending');
+                document.getElementById('pendingCount').innerText = p.length;
+                document.getElementById('pendingTableBody').innerHTML = p.map(u => `<tr><td>${u.name}</td><td>${u.location}</td><td><button onclick="app.approveUser('${u.id}')">قبول</button></td></tr>`).join('');
+            },
+
+            approveUser: function(id) {
+                const u = this.data.users.find(u => u.id === id); u.status = 'active'; this.addNotification(id, 'تم التفعيل', 'success'); this.saveData(); this.loadAdminData();
+            },
+
+            rejectUser: function(id) {
+                if(confirm('حذف؟')) { this.data.users = this.data.users.filter(u => u.id !== id); this.saveData(); this.loadAdminData(); }
+            },
+
+            // --- Shifts ---
+            renderShiftRequestsTable: function() {
+                const tbody = document.getElementById('shiftRequestsTableBody');
+                let html = ''; let count = 0;
+                this.data.users.forEach(u => { if(u.shifts) u.shifts.forEach(s => { if(s.status === 'pending') {
+                    count++; html += `<tr><td>${u.name}</td><td>${s.date}</td><td><button onclick="app.decideShift('${u.id}','${s.date}','approved')">✔</button> <button onclick="app.decideShift('${u.id}','${s.date}','rejected')">✖</button></td></tr>`;
+                }})});
+                document.getElementById('pendingShiftsCount').innerText = count; tbody.innerHTML = count ? html : '<tr><td colspan="3">لا يوجد</td></tr>';
+            },
+
+            decideShift: function(uid, date, decision) {
+                const u = this.data.users.find(u => u.id === uid); const s = u.shifts.find(s => s.date === date);
+                s.status = decision; this.addNotification(uid, `طلب الدوام ${decision==='approved'?'مقبول':'مرفوض'}`, decision==='approved'?'success':'error');
+                this.saveData(); this.loadAdminData();
+            },
+
+            // --- Passwords ---
+            requestPasswordChange: function() {
+                const p = document.getElementById('newVolunteerPass').value; if(!p) return;
+                this.data.currentUser.passwordRequest = { newPass: p, status: 'pending' };
+                this.saveData(); alert('تم الطلب'); this.checkPassRequestStatus();
+            },
+
+            checkPassRequestStatus: function() {
+                if(this.data.currentUser.passwordRequest?.status === 'pending') document.getElementById('passRequestStatus').classList.remove('hidden');
+                else document.getElementById('passRequestStatus').classList.add('hidden');
+            },
+
+            renderPasswordRequests: function() {
+                const reqs = this.data.users.filter(u => u.passwordRequest?.status === 'pending');
+                document.getElementById('pendingPassCount').innerText = reqs.length;
+                document.getElementById('passwordRequestsBody').innerHTML = reqs.map(u => `<tr><td>${u.name}</td><td>${u.passwordRequest.newPass}</td><td><button onclick="app.approvePassChange('${u.id}')">✔</button></td></tr>`).join('');
+            },
+
+            approvePassChange: function(id) {
+                const u = this.data.users.find(u => u.id === id); u.pass = u.passwordRequest.newPass; u.passwordRequest = null; this.addNotification(id, 'تم تغيير كلمة السر', 'success'); this.saveData(); this.loadAdminData();
+            },
+
+            rejectPassChange: function(id) {
+                const u = this.data.users.find(u => u.id === id); u.passwordRequest = null; this.addNotification(id, 'تم رفض تغيير كلمة السر', 'error'); this.saveData(); this.loadAdminData();
+            },
+
+            // --- Live & Reports ---
+            renderLiveAttendance: function() {
+                const active = this.data.users.filter(u => u.currentSession?.status === 'active');
+                document.getElementById('activeVolunteersCount').innerText = active.length;
+                document.getElementById('liveAttendanceBody').innerHTML = active.map(u => `<tr><td>${u.name}</td><td>${u.currentSession.checkInTime}</td><td>${u.location}</td></tr>`).join('');
+            },
+
+            renderDailyReport: function() {
+                const today = new Date().toISOString().split('T')[0]; document.getElementById('reportDate').innerText = today;
+                const present = this.data.users.filter(u => u.currentSession?.date === today && (u.currentSession.status === 'active' || u.currentSession.status === 'completed'));
+                document.getElementById('dailyReportContent').innerHTML = `<p>عدد الحضور: ${present.length}</p><ul>${present.map(u => `<li>${u.name}</li>`).join('')}</ul>`;
+            },
+
+            printDailyReport: function() {
+                const w = window.open(); w.document.write(document.getElementById('dailyReportContent').innerHTML); w.print(); w.close();
+            },
+
+            submitSuggestion: function() {
+                const t = document.getElementById('suggestionText').value; if(t) { this.data.suggestions.unshift({ text: t, author: this.data.currentUser.name, date: new Date().toLocaleDateString() }); this.saveData(); document.getElementById('suggestionText').value=''; alert('تم الإرسال'); }
+            },
+
+            renderSuggestions: function() {
+                document.getElementById('suggestionsCount').innerText = this.data.suggestions.length;
+                document.getElementById('suggestionsList').innerHTML = this.data.suggestions.map(s => `<div class="border p-2 rounded text-sm"><p class="font-bold">${s.author}</p><p>${s.text}</p></div>`).join('');
+            },
+
+            // --- Volunteer UX ---
+            loadVolunteerData: function() {
+                document.getElementById('volNameSpan').innerText = this.data.currentUser.name;
+                this.renderNotifications(); this.generateShifts(); this.renderElectronicGate(); this.checkPassRequestStatus();
+            },
+
+            generateShifts: function() {
+                const container = document.getElementById('shiftsContainer'); container.innerHTML = '';
+                let shiftDates = new Set(); let today = new Date();
+                let d = new Date(today); d.setDate(d.getDate() + (1 + 7 - d.getDay()) % 7);
+                for(let i=0; i<4; i++) {
+                    let m = new Date(d); let t = new Date(d); t.setDate(m.getDate() + 1);
+                    shiftDates.add(m.toISOString().split('T')[0]); shiftDates.add(t.toISOString().split('T')[0]);
+                    d.setDate(d.getDate() + 7);
+                }
+                if(this.data.settings.customShifts) this.data.settings.customShifts.forEach(date => { if(new Date(date) >= new Date(today.toISOString().split('T')[0])) shiftDates.add(date); });
+                
+                const sorted = Array.from(shiftDates).sort().map(s => new Date(s));
+                sorted.forEach(date => {
+                    const dateStr = date.toLocaleDateString('ar-JO'); const key = date.toISOString().split('T')[0];
+                    const shift = this.data.currentUser.shifts?.find(s => s.date === key);
+                    let btn = `<button onclick="app.requestShift('${key}')" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">تسجيل</button>`;
+                    if(shift) btn = shift.status === 'pending' ? '<span class="text-yellow-600">انتظار</span>' : shift.status === 'approved' ? '<span class="text-green-600">مقبول</span>' : '<span class="text-red-600">مرفوض</span>';
+                    container.innerHTML += `<div class="flex justify-between bg-gray-50 p-2 rounded border mb-2"><span>${dateStr}</span>${btn}</div>`;
+                });
+            },
+
+            requestShift: function(date) {
+                if(!this.data.currentUser.shifts) this.data.currentUser.shifts = [];
+                this.data.currentUser.shifts.push({ date, status: 'pending' }); this.saveData(); this.generateShifts();
+            },
+
+            renderElectronicGate: function() {
+                const gate = document.getElementById('electronicGate'); const today = new Date().toISOString().split('T')[0];
+                const shift = this.data.currentUser.shifts?.find(s => s.date === today && s.status === 'approved');
+                if(!shift) { gate.innerHTML = '<p class="text-center text-gray-500">البوابة مغلقة (لا يوجد مناوبة)</p>'; return; }
+                if(this.data.currentUser.currentSession?.status === 'active') {
+                    gate.innerHTML = `<div class="text-center text-green-600 font-bold"><p>أنت على رأس عملك</p><button onclick="app.checkOut()" class="bg-red-500 text-white px-4 py-2 rounded mt-2">خروج</button></div>`;
+                } else {
+                    gate.innerHTML = `<div class="text-center text-blue-600 font-bold"><p>البوابة مفتوحة</p><button onclick="app.checkIn()" class="bg-green-600 text-white px-4 py-2 rounded mt-2">دخول</button></div>`;
+                }
+            },
+
+            checkIn: function() {
+                this.data.currentUser.currentSession = { status: 'active', checkInTime: new Date().toLocaleTimeString(), date: new Date().toISOString().split('T')[0] };
+                this.saveData(); this.renderElectronicGate();
+            },
+
+            checkOut: function() {
+                this.data.currentUser.currentSession = { status: 'completed' }; this.saveData(); this.renderElectronicGate();
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
