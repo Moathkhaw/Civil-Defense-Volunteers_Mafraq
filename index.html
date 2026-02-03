@@ -3,483 +3,524 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوابة نشامى المفرق - النسخة الماسية</title>
+    <title>بوابة نشامى المفرق - النظام السيادي الشامل</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        jcd: { blue: '#1e3a8a', red: '#dc2626', gold: '#fbbf24', dark: '#0f172a' }
+                    },
+                    animation: { 
+                        'float': 'float 6s ease-in-out infinite',
+                        'shine': 'shine 3s linear infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                    },
+                    keyframes: {
+                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
+                        shine: { '0%': { backgroundPosition: '200% center' }, '100%': { backgroundPosition: '-200% center' } }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
-        :root {
-            --jcd-blue: #1e3a8a;
-            --jcd-red: #dc2626;
-            --jcd-gold: #fbbf24;
-            --jcd-dark: #111827;
+        body { font-family: 'Tajawal', sans-serif; }
+        
+        .hero-section {
+            background: radial-gradient(circle at center, #1e3a8a 0%, #111827 100%);
+            position: relative; overflow: hidden;
         }
-        body { font-family: 'Tajawal', sans-serif; background-color: #f3f4f6; color: #1f2937; overflow-x: hidden; }
-        .bg-jcd-blue { background-color: var(--jcd-blue); }
-        .bg-jcd-red { background-color: var(--jcd-red); }
-        .text-jcd-blue { color: var(--jcd-blue); }
-        
-        .hero-pattern { 
-            background-color: #1e3a8a; 
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232c4da7' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); 
+        .hero-section::after {
+            content: ''; position: absolute; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2V6h4V4H6z' fill='%23ffffff' fill-opacity='0.03'/%3E%3C/svg%3E");
         }
-        .fade-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .login-tab.active { background-color: white; border-bottom: 4px solid var(--jcd-blue); color: var(--jcd-blue); font-weight: 800; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .ticker-wrap { width: 100%; overflow: hidden; background: var(--jcd-red); color: white; padding: 10px 0; border-bottom: 2px solid rgba(255,255,255,0.2); z-index: 100; }
-        .ticker { display: inline-block; white-space: nowrap; animation: ticker 40s linear infinite; font-weight: bold; }
-        @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-        .admin-card { background: white; border-radius: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1.5rem; border-top: 5px solid var(--jcd-blue); transition: all 0.3s; position: relative; overflow: hidden; }
-        .admin-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-        #globalLoader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
-        /* Roles & Badges */
-        .badge-official { background: linear-gradient(45deg, #fbbf24, #f59e0b); color: #000; padding: 2px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 800; box-shadow: 0 2px 6px rgba(251, 191, 36, 0.4); border: 1px solid #fff; }
-        .badge-admin { background: #1e3a8a; color: white; padding: 2px 8px; border-radius: 6px; font-size: 0.65rem; }
-        .badge-volunteer { background: #4b5563; color: white; padding: 2px 8px; border-radius: 6px; font-size: 0.65rem; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .official-card {
+            background: linear-gradient(145deg, #1e3a8a, #000000);
+            border: 2px solid #fbbf24;
+            color: white;
+        }
+
+        .rank-border-leader { border-color: #fbbf24; box-shadow: 0 0 15px rgba(251, 191, 36, 0.5); }
+        .rank-border-nashmi { border-color: #22c55e; }
+        .rank-border-rescuer { border-color: #f97316; }
+        .rank-border-regular { border-color: #9ca3af; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
         
-        .gallery-img-container { position: relative; border-radius: 1rem; overflow: hidden; aspect-ratio: 4/3; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .gallery-img-container img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
-        .gallery-img-container:hover img { transform: scale(1.1); }
+        #map { height: 100%; width: 100%; border-radius: 1rem; z-index: 0; }
     </style>
 </head>
-<body class="flex flex-col min-h-screen text-right font-black">
+<body class="flex flex-col min-h-screen text-right font-black bg-gray-50 text-gray-800 dark:bg-gray-950 dark:text-gray-100 transition-colors duration-300">
 
-    <!-- Toast UI -->
-    <div id="toastContainer" class="fixed bottom-10 left-10 z-[300] space-y-3 font-black text-xs"></div>
-
-    <!-- Loader -->
-    <div id="globalLoader">
-        <div class="relative">
-            <div class="animate-spin rounded-full h-28 w-28 border-t-4 border-b-4 border-jcd-blue"></div>
-            <img id="loaderLogo" src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Jordan_Civil_Defence_Logo.png" class="absolute inset-0 m-auto h-14 w-14">
-        </div>
-        <p class="text-gray-600 font-black mt-8 tracking-widest uppercase text-sm font-black">بوابة نشامى المفرق</p>
-    </div>
-
-    <!-- Ticker -->
-    <div id="news-ticker-container" class="ticker-wrap hidden no-print">
-        <div class="ticker" id="newsTickerText">جاري تحميل آخر الأخبار والتعميمات الرسمية...</div>
-    </div>
-
-    <!-- Navigation -->
-    <nav class="bg-jcd-blue text-white shadow-2xl sticky top-0 z-50 no-print font-black">
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 glass-panel bg-jcd-blue/90 text-white shadow-lg backdrop-blur-md">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-4 cursor-pointer group" onclick="app.showSection('home')">
-                <div class="bg-white p-1 rounded-full h-12 w-12 flex items-center justify-center border-2 border-yellow-400 shadow-lg group-hover:rotate-12 transition-transform">
-                     <img id="navLogo" src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Jordan_Civil_Defence_Logo.png" class="h-10 w-10 object-contain">
-                </div>
+            <div class="flex items-center gap-3 cursor-pointer" onclick="app.showSection('home')">
+                <img id="navLogo" src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Jordan_Civil_Defence_Logo.png" class="h-10 w-10 object-contain drop-shadow-md">
                 <div>
-                    <h1 class="font-black text-xl leading-tight tracking-tight">متطوعي الدفاع المدني المفرق</h1>
-                    <p class="text-[9px] text-yellow-400 font-bold uppercase tracking-[0.2em] opacity-80 underline underline-offset-4">بوابة التميز الرقمية</p>
+                    <h1 class="font-black text-lg leading-tight">بوابة نشامى المفرق</h1>
+                    <p class="text-[10px] text-yellow-400 font-bold tracking-widest opacity-90">النظام الرقمي الموحد</p>
                 </div>
             </div>
             
-            <div class="flex items-center gap-6">
-                <div id="guestLinks" class="hidden md:flex gap-8 text-sm">
-                    <button onclick="app.showSection('home')" class="hover:text-yellow-400 transition underline-offset-8 hover:underline">الرئيسية</button>
-                    <button onclick="app.showSection('gallery-section')" class="hover:text-yellow-400 transition underline-offset-8 hover:underline">المعرض</button>
-                    <button id="loginShortcut" onclick="app.showLogin('volunteer')" class="bg-jcd-red px-6 py-2 rounded-full shadow-xl text-white hover:scale-105 transition-all font-black">دخول النظام</button>
+            <div class="flex items-center gap-4">
+                <div id="guestLinks" class="hidden md:flex items-center gap-6 text-sm font-bold">
+                    <button onclick="app.showSection('home')" class="hover:text-yellow-400 transition">الرئيسية</button>
+                    <button onclick="app.showSection('nashama-section')" class="hover:text-yellow-400 transition">بوابة النشامى</button>
+                    <button onclick="app.showLogin('volunteer')" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full border border-white/20 transition">دخول النظام</button>
                 </div>
                 
-                <div id="userMenu" class="hidden flex items-center gap-6 text-sm">
-                    <div class="relative cursor-pointer" onclick="app.toggleNotifications()">
-                        <i class="fas fa-bell text-2xl text-gray-300 hover:text-white transition"></i>
-                        <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-500 text-[10px] text-white rounded-full h-5 w-5 flex items-center justify-center border-2 border-jcd-blue hidden font-black animate-bounce font-black">0</span>
+                <div id="userMenu" class="hidden flex items-center gap-4">
+                    <div class="relative cursor-pointer group" onclick="app.toggleNotifications()">
+                        <i class="fas fa-bell text-xl group-hover:text-yellow-400 transition"></i>
+                        <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-600 text-[10px] h-4 w-4 flex items-center justify-center rounded-full hidden animate-pulse">0</span>
                     </div>
-                    <div class="flex flex-col items-end">
-                        <span id="userNameDisplay" class="font-black text-yellow-400 text-xs font-black"></span>
-                        <button onclick="app.logout()" class="text-[10px] text-gray-400 hover:text-white underline font-black uppercase font-black">تسجيل الخروج</button>
+                    <div class="text-left leading-tight">
+                        <span id="userNameDisplay" class="block text-xs font-black text-yellow-400"></span>
+                        <button onclick="app.logout()" class="text-[10px] text-gray-300 hover:text-white underline">خروج</button>
                     </div>
                 </div>
             </div>
         </div>
     </nav>
 
-    <main id="main-content" class="flex-grow container mx-auto px-4 py-8">
+    <!-- Ticker -->
+    <div id="news-ticker-container" class="bg-jcd-red text-white text-xs py-2 overflow-hidden hidden relative z-40">
+        <div class="whitespace-nowrap animate-marquee px-4 font-bold" id="newsTickerText"></div>
+    </div>
+
+    <main id="main-content" class="flex-grow container mx-auto px-4 py-6 relative z-0">
         
-        <!-- Home Section -->
+        <!-- Hero Section -->
         <section id="home" class="fade-in">
-            <div class="hero-pattern rounded-[3.5rem] p-10 md:p-28 text-center text-white shadow-2xl relative overflow-hidden min-h-[80vh] flex items-center justify-center border-b-8 border-yellow-400">
-                <div class="relative z-10 w-full max-w-5xl text-center font-black">
-                    <img id="heroLogo" src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Jordan_Civil_Defence_Logo.png" class="h-44 mx-auto mb-10 drop-shadow-2xl animate-pulse">
-                    <h2 class="text-6xl md:text-8xl font-black mb-6 tracking-tighter drop-shadow-2xl font-black uppercase">نشامى المفرق</h2>
-                    <p class="text-xl md:text-3xl text-blue-100 mb-14 font-medium max-w-4xl mx-auto opacity-90 italic font-bold">"أصالة في الخدمة.. تميز في العطاء"</p>
+            <div class="hero-section rounded-[3rem] p-8 md:p-20 text-center text-white shadow-2xl relative min-h-[80vh] flex flex-col items-center justify-center border-b-8 border-yellow-500">
+                <div class="relative z-10 w-full max-w-4xl">
+                    <div class="animate-float mb-8">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Jordan_Civil_Defence_Logo.png" class="h-40 md:h-56 mx-auto drop-shadow-2xl">
+                    </div>
+                    <h2 class="text-5xl md:text-7xl font-black mb-6 tracking-tighter drop-shadow-xl bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300" style="-webkit-text-stroke: 1px rgba(255,255,255,0.1);">نشامى المفرق</h2>
+                    <p class="text-lg md:text-2xl text-blue-100 mb-12 max-w-2xl mx-auto font-medium">"منصة التطوع الرقمية الأولى لتوثيق العطاء وتنظيم الواجب"</p>
                     
-                    <!-- News Feed -->
-                    <div id="news-feed-container" class="max-w-2xl mx-auto mb-10 space-y-4 font-black"></div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <button onclick="app.showSection('registration')" class="bg-green-600 text-white px-8 py-8 rounded-[2rem] font-black text-xl shadow-2xl flex flex-col items-center justify-center gap-4 border-b-8 border-green-900 group hover:scale-105 transition-all font-black">
-                            <i class="fas fa-user-plus text-4xl group-hover:rotate-12 transition font-black font-black"></i>
-                            <span>انضم إلينا</span>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl mx-auto">
+                        <button onclick="app.showSection('registration')" class="glass-panel hover:bg-white/10 p-6 rounded-3xl transition transform hover:scale-105 group border-b-4 border-green-500">
+                            <i class="fas fa-user-plus text-4xl mb-3 text-green-400 group-hover:rotate-12 transition"></i>
+                            <h3 class="text-xl font-black">انضم إلينا</h3>
+                            <p class="text-xs text-gray-300 mt-1">سجل كمتطوع جديد</p>
                         </button>
-                        <button onclick="app.showLogin('volunteer')" class="bg-white text-jcd-blue px-8 py-8 rounded-[2rem] font-black text-xl shadow-2xl flex flex-col items-center justify-center gap-4 border-b-8 border-gray-300 group hover:scale-105 transition-all font-black">
-                            <i class="fas fa-id-badge text-4xl group-hover:scale-110 transition text-jcd-blue font-black font-black"></i>
-                            <span>بوابة المتطوعين</span>
+                        
+                        <button onclick="app.showLogin('volunteer')" class="glass-panel hover:bg-white/10 p-6 rounded-3xl transition transform hover:scale-105 group border-b-4 border-yellow-500">
+                            <i class="fas fa-id-card-alt text-4xl mb-3 text-yellow-400 group-hover:scale-110 transition"></i>
+                            <h3 class="text-xl font-black">دخول المتطوعين</h3>
+                            <p class="text-xs text-gray-300 mt-1">لوحة التحكم والخدمات</p>
                         </button>
-                        <button onclick="app.showLogin('admin')" class="bg-jcd-dark text-white px-8 py-8 rounded-[2rem] font-black text-xl shadow-2xl flex flex-col items-center justify-center gap-4 border-b-8 border-black text-yellow-500 group hover:scale-105 transition-all text-center font-black">
-                            <i class="fas fa-lock-open text-4xl group-hover:scale-110 transition"></i>
-                            <span>لوحة الإدارة</span>
+                        
+                        <button onclick="app.showLogin('admin')" class="glass-panel hover:bg-white/10 p-6 rounded-3xl transition transform hover:scale-105 group border-b-4 border-red-500">
+                            <i class="fas fa-shield-alt text-4xl mb-3 text-red-500 group-hover:scale-110 transition"></i>
+                            <h3 class="text-xl font-black">الإدارة</h3>
+                            <p class="text-xs text-gray-300 mt-1">للمسؤولين فقط</p>
                         </button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Registration Section -->
-        <section id="registration" class="fade-in hidden max-w-2xl mx-auto py-10 text-right font-black">
-            <div class="bg-white rounded-[3rem] shadow-2xl p-12 border-t-8 border-green-600">
-                <h2 class="text-4xl font-black text-jcd-blue mb-4 text-right">طلب انتساب جديد</h2>
-                <p class="text-gray-500 mb-10 font-bold font-black">سيتم مراجعة طلبك من قبل الإدارة لتفعيل الحساب</p>
-                <form onsubmit="app.handleRegistration(event)" class="grid grid-cols-1 md:grid-cols-2 gap-6 font-black text-right font-black">
-                    <div class="md:col-span-2">
-                        <input type="text" id="regName" placeholder="الاسم الرباعي الكامل" class="w-full p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-green-600 outline-none text-right shadow-inner font-black font-black" required>
-                    </div>
-                    <div class="text-right font-black font-black">
-                        <input type="text" id="regId" placeholder="الرقم الوطني" class="w-full p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-green-600 outline-none text-right shadow-inner font-black" required>
-                    </div>
-                    <div class="text-right font-black font-black font-black">
-                        <select id="regLocation" class="w-full p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-green-600 outline-none text-right shadow-inner font-black">
-                            <option>المفرق - القصبة</option><option>بلعما</option><option>ارحاب</option><option>الخالدية</option><option>الرويشد</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2 font-black font-black">
-                        <input type="password" id="regPass" placeholder="اختر كلمة مرور" class="w-full p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-green-600 outline-none text-right shadow-inner font-black" required>
-                    </div>
-                    <button type="submit" class="md:col-span-2 bg-green-600 text-white font-black py-5 rounded-[1.5rem] shadow-xl text-xl hover:bg-green-700 transition uppercase tracking-widest font-black font-black font-black">إرسال الطلب</button>
-                    <button type="button" onclick="app.showSection('home')" class="md:col-span-2 text-sm text-gray-400 font-bold text-center uppercase tracking-widest hover:text-jcd-blue font-black font-black">إلغاء والعودة</button>
-                </form>
+        <!-- Nashama Portal -->
+        <section id="nashama-section" class="fade-in hidden">
+            <div class="text-center mb-10">
+                <h2 class="text-4xl font-black text-jcd-blue dark:text-white mb-2">بوابة النشامى</h2>
+                <p class="text-gray-500 dark:text-gray-400 font-bold">قائمة الشرف للمتطوعين المتميزين - تحديث حي</p>
             </div>
-        </section>
+            
+            <div class="max-w-md mx-auto mb-10 relative">
+                <input type="text" oninput="app.filterNashama(this.value)" placeholder="ابحث باسم النشمي..." class="w-full p-4 pr-12 rounded-2xl bg-white dark:bg-gray-800 shadow-lg border border-gray-100 dark:border-gray-700 outline-none focus:ring-2 focus:ring-jcd-blue transition">
+                <i class="fas fa-search absolute right-4 top-4 text-gray-400"></i>
+            </div>
 
-        <!-- Gallery Section -->
-        <section id="gallery-section" class="fade-in hidden font-black">
-            <div class="bg-white rounded-[3rem] p-12 shadow-xl border border-gray-100 font-black text-right font-black font-black font-black">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6 font-black font-black font-black">
-                    <div>
-                        <h2 class="text-5xl font-black text-jcd-blue mb-2 font-black">معرض صور الميدان</h2>
-                        <p class="text-gray-500 font-bold text-lg font-black font-black">توثيق حي لعطاء نشامى الدفاع المدني</p>
-                    </div>
-                    <i class="fas fa-images text-7xl text-gray-100 font-black"></i>
-                </div>
-                <div id="fullGalleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 font-black font-black font-black font-black"></div>
-            </div>
+            <div id="nashamaGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
         </section>
 
         <!-- Login Section -->
-        <section id="login" class="fade-in hidden max-w-md mx-auto py-10 font-black">
-            <div class="bg-white rounded-[2.5rem] shadow-2xl p-10 border-t-8 border-jcd-blue relative overflow-hidden font-black">
-                <div class="flex mb-10 bg-gray-100 rounded-2xl p-1.5 shadow-inner font-black font-black">
-                    <button class="w-1/2 login-tab active py-4 text-sm font-black rounded-xl transition font-black font-black font-black" id="tab-volunteer" onclick="app.switchLoginTab('volunteer')">متطوع</button>
-                    <button class="w-1/2 login-tab py-4 text-sm font-black rounded-xl transition font-black font-black font-black" id="tab-admin" onclick="app.switchLoginTab('admin')">إدارة</button>
+        <section id="login" class="fade-in hidden max-w-md mx-auto py-10">
+            <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl p-8 border-t-8 border-jcd-blue relative overflow-hidden">
+                <div class="flex mb-8 bg-gray-100 dark:bg-gray-700 rounded-2xl p-1">
+                    <button class="w-1/2 py-3 rounded-xl text-sm font-black transition-all bg-white dark:bg-gray-600 shadow-sm text-jcd-blue dark:text-white" id="tab-volunteer" onclick="app.switchLoginTab('volunteer')">متطوع</button>
+                    <button class="w-1/2 py-3 rounded-xl text-sm font-black transition-all text-gray-500 dark:text-gray-400 hover:text-jcd-blue" id="tab-admin" onclick="app.switchLoginTab('admin')">إدارة</button>
                 </div>
-                <h2 class="text-3xl font-black text-center mb-10 text-jcd-blue font-black" id="loginTitle">تسجيل الدخول</h2>
-                <form onsubmit="app.handleLogin(event)" class="space-y-6 font-black text-right text-sm font-black">
-                    <div class="relative font-black">
-                        <input type="text" id="username" placeholder="المعرف / الرقم الوطني" class="w-full bg-gray-50 p-4 pr-12 rounded-2xl outline-none transition focus:ring-4 focus:ring-blue-100 border-2 border-transparent focus:border-jcd-blue text-right font-black" required>
-                        <i class="fas fa-id-card absolute right-4 top-4 text-gray-400 font-black font-black"></i>
-                    </div>
-                    <div class="relative font-black">
-                        <input type="password" id="password" placeholder="كلمة المرور" class="w-full bg-gray-50 p-4 pr-12 rounded-2xl outline-none transition focus:ring-4 focus:ring-blue-100 border-2 border-transparent focus:border-jcd-blue text-right font-black" required>
-                        <i class="fas fa-lock absolute right-4 top-4 text-gray-400 font-black font-black"></i>
-                    </div>
-                    <button type="submit" class="w-full bg-jcd-blue text-white font-black py-5 rounded-[1.5rem] shadow-xl text-lg tracking-widest uppercase transition-all hover:bg-blue-900 font-black font-black font-black">دخول آمن</button>
+                
+                <h2 class="text-2xl font-black text-center mb-6 text-jcd-blue dark:text-white" id="loginTitle">تسجيل دخول النشامى</h2>
+                
+                <form onsubmit="app.handleLogin(event)" class="space-y-5">
+                    <input type="text" id="username" placeholder="المعرف / الرقم الوطني" class="w-full bg-gray-50 dark:bg-gray-700 dark:text-white p-4 rounded-2xl outline-none border-2 border-transparent focus:border-jcd-blue transition font-bold text-right" required>
+                    <input type="password" id="password" placeholder="كلمة المرور" class="w-full bg-gray-50 dark:bg-gray-700 dark:text-white p-4 rounded-2xl outline-none border-2 border-transparent focus:border-jcd-blue transition font-bold text-right" required>
+                    <button type="submit" id="loginBtn" class="w-full bg-jcd-blue hover:bg-blue-900 text-white font-black py-4 rounded-2xl shadow-xl transition transform active:scale-95 flex justify-center items-center gap-2"><span>دخول آمن</span><i class="fas fa-arrow-left"></i></button>
                 </form>
             </div>
         </section>
 
         <!-- Volunteer Dashboard -->
-        <section id="volunteer-dashboard" class="fade-in hidden space-y-10 font-black text-right font-black font-black font-black">
-            <div class="bg-jcd-blue rounded-[3rem] p-10 md:p-14 text-white shadow-2xl flex flex-col md:flex-row justify-between items-center gap-10 relative overflow-hidden text-right font-black font-black font-black font-black font-black font-black">
-                <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none hero-pattern scale-150 font-black font-black font-black font-black font-black font-black"></div>
-                <div class="flex items-center gap-10 relative z-10 font-black">
-                    <div class="relative group font-black">
-                        <img id="dashAvatar" src="https://via.placeholder.com/150" class="h-44 w-44 rounded-full border-8 border-white/20 shadow-2xl object-cover cursor-pointer transition-all duration-500 hover:scale-105 font-black font-black font-black font-black" onclick="app.openProfileEdit()">
-                        <div class="absolute bottom-2 right-2 bg-yellow-400 text-black h-12 w-12 rounded-full flex items-center justify-center shadow-lg cursor-pointer animate-bounce font-black" onclick="app.openProfileEdit()"><i class="fas fa-camera text-xl font-black font-black"></i></div>
+        <section id="volunteer-dashboard" class="fade-in hidden space-y-8">
+            <div class="bg-gradient-to-r from-jcd-blue to-blue-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-full opacity-20 hero-pattern pointer-events-none"></div>
+                <div class="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                    <div class="relative">
+                        <img id="dashAvatar" src="https://via.placeholder.com/150" class="h-32 w-32 rounded-full border-4 border-yellow-400 shadow-xl object-cover bg-gray-200">
+                        <span id="dashRankBadge" class="absolute -bottom-3 right-1/2 translate-x-1/2 bg-yellow-400 text-black text-xs px-3 py-1 rounded-full font-black shadow-lg whitespace-nowrap">نشمي</span>
                     </div>
+                    <div class="text-center md:text-right flex-grow">
+                        <h2 class="text-3xl font-black mb-1" id="volNameDisplay"></h2>
+                        <p class="text-blue-200 text-sm mb-4" id="volBioDisplay">متطوع</p>
+                        <div class="flex flex-wrap justify-center md:justify-start gap-3">
+                            <button onclick="app.openIDModal()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2"><i class="fas fa-id-card"></i> هويتي</button>
+                            <button onclick="app.openFullProfile()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2"><i class="fas fa-user-circle"></i> ملفي الشامل</button>
+                        </div>
+                    </div>
+                    <div id="gateContainer" class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 text-center min-w-[200px]"></div>
+                </div>
+            </div>
+
+            <!-- Stats & AI Message -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2 bg-gradient-to-r from-orange-500 to-red-600 rounded-[2rem] p-6 text-white shadow-lg relative overflow-hidden">
+                    <i class="fas fa-quote-right absolute top-4 left-4 text-4xl opacity-20"></i>
+                    <h4 class="font-black text-sm mb-2 opacity-80">رسالة اليوم من القيادة</h4>
+                    <p id="dailyMessageText" class="text-lg font-bold leading-relaxed relative z-10">جاري الاتصال بالعمليات...</p>
+                </div>
+                <div class="bg-gradient-to-br from-blue-400 to-cyan-500 rounded-[2rem] p-6 text-white shadow-lg flex items-center justify-between">
                     <div>
-                        <div class="flex flex-wrap items-center gap-4 text-right font-black">
-                            <h2 class="text-4xl md:text-6xl font-black tracking-tighter font-black font-black" id="volNameDisplay"></h2>
-                            <span id="dashOfficialBadge" class="hidden badge-official font-black font-black font-black font-black font-black"><i class="fas fa-crown mr-1 font-black"></i> مسؤول دفعة</span>
-                        </div>
-                        <p id="volBioDisplay" class="text-blue-100/70 mt-6 text-sm font-medium italic max-w-md leading-relaxed font-black font-black font-black font-black font-black"></p>
-                        <div class="flex flex-wrap gap-5 mt-10 font-black">
-                            <div class="bg-white/10 backdrop-blur-2xl px-10 py-5 rounded-[2rem] text-2xl flex items-center gap-5 border border-white/10 shadow-2xl font-black font-black font-black">
-                                <i class="fas fa-star text-yellow-400 text-4xl animate-pulse font-black font-black font-black font-black font-black"></i> 
-                                <div><span id="volPoints" class="block leading-none text-yellow-400 font-black font-black">0</span><span class="text-[10px] uppercase tracking-widest text-blue-200 block mt-2 font-black font-black">نقاط تميز</span></div>
-                            </div>
-                            <div class="bg-white/10 backdrop-blur-2xl px-10 py-5 rounded-[2rem] text-2xl flex items-center gap-5 border border-white/10 shadow-2xl font-black font-black font-black font-black font-black">
-                                <i class="fas fa-hourglass-half text-green-400 text-4xl font-black font-black font-black font-black font-black"></i> 
-                                <div><span id="volHours" class="block leading-none text-green-400 font-black font-black">0</span><span class="text-[10px] uppercase tracking-widest text-blue-200 block mt-2 font-black font-black font-black font-black">ساعة تطوع</span></div>
-                            </div>
-                        </div>
+                        <h4 class="text-sm font-bold opacity-80">الطقس (المفرق)</h4>
+                        <div class="text-3xl font-black mt-1" id="weatherTemp">--°</div>
+                        <div class="text-xs bg-white/20 px-2 py-1 rounded inline-block mt-1">مشمس</div>
                     </div>
+                    <i class="fas fa-sun text-5xl text-yellow-300 animate-spin-slow"></i>
                 </div>
-                <div id="gateContainer" class="bg-white/10 backdrop-blur-3xl p-10 rounded-[2.5rem] border border-white/20 text-center min-w-[350px] relative z-10 shadow-inner font-black font-black font-black font-black font-black"></div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 font-black font-black font-black font-black">
-                <div class="lg:col-span-1 space-y-10 text-right font-black font-black">
-                    <div class="bg-white p-10 rounded-[3rem] shadow-xl border-b-8 border-jcd-blue font-black">
-                        <h3 class="font-black text-2xl mb-8 flex items-center gap-4 text-jcd-blue font-black font-black font-black font-black font-black"><i class="fas fa-chart-line text-blue-500 font-black"></i> مؤشرات الأداء</h3>
-                        <canvas id="performanceChart" height="250"></canvas>
-                    </div>
-                    <div class="bg-jcd-dark text-white p-10 rounded-[3rem] shadow-2xl relative overflow-hidden text-right font-black font-black font-black">
-                        <div class="absolute -top-10 -right-10 h-40 w-40 bg-yellow-500/10 rounded-full blur-3xl font-black"></div>
-                        <h3 class="font-black text-2xl mb-10 flex items-center gap-4 relative z-10 font-black font-black font-black font-black font-black font-black font-black"><i class="fas fa-award text-yellow-400 text-4xl ml-2 animate-bounce font-black font-black font-black font-black font-black"></i> لوحة الشرف</h3>
-                        <div id="leaderboardList" class="space-y-6 relative z-10 font-black text-right font-black font-black font-black font-black font-black"></div>
-                    </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-lg border-b-4 border-purple-500">
+                    <h4 class="font-black text-lg mb-4 text-purple-600 dark:text-purple-400 flex items-center gap-2"><i class="fas fa-graduation-cap"></i> الدورات المتاحة</h4>
+                    <div id="volCoursesList" class="space-y-3 max-h-48 overflow-y-auto custom-scrollbar"><p class="text-xs text-gray-400 text-center py-4">لا توجد دورات حالياً</p></div>
                 </div>
-
-                <div class="lg:col-span-2 space-y-10 text-right font-black font-black font-black">
-                    <div class="bg-white p-12 rounded-[3.5rem] shadow-xl border border-gray-50 text-right font-black">
-                        <h3 class="font-black text-3xl text-jcd-blue flex items-center gap-5 mb-12 text-right font-black font-black font-black font-black font-black"><i class="fas fa-calendar-alt text-blue-500 ml-2 font-black font-black"></i> حجز المناوبات (آلي: إثنين وثلاثاء)</h3>
-                        <div id="shiftsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-8 font-black font-black font-black font-black font-black"></div>
-                    </div>
-
-                    <div class="bg-gradient-to-br from-indigo-900 via-blue-900 to-jcd-blue rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden font-black">
-                        <h3 class="font-black text-2xl mb-10 flex items-center gap-4 text-right font-black font-black font-black font-black font-black font-black font-black font-black font-black font-black"><i class="fas fa-robot text-blue-300 ml-2 font-black font-black font-black font-black font-black"></i> المستشار الذكي (Gemini AI)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-10 text-right font-black">
-                            <div class="bg-white/10 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/10 shadow-inner font-black font-black">
-                                <div id="safetyChat" class="h-64 overflow-y-auto mb-6 bg-black/20 rounded-2xl p-6 text-xs space-y-4 custom-scrollbar text-right font-black"></div>
-                                <div class="flex gap-4 font-black">
-                                    <input type="text" id="safetyInput" placeholder="اسأل الخبير..." class="flex-grow bg-white/10 border-none rounded-xl px-5 py-4 text-xs outline-none text-white font-black text-right shadow-inner font-black">
-                                    <button onclick="app.askAI()" class="bg-blue-500 p-4 rounded-xl hover:bg-blue-400 transition shadow-xl font-black font-black"><i class="fas fa-paper-plane font-black font-black font-black"></i></button>
-                                </div>
-                            </div>
-                            <div class="bg-white/10 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/10 flex flex-col shadow-inner font-black font-black">
-                                <textarea id="reportContext" placeholder="وقائع المهمة..." class="w-full flex-grow bg-white/10 border-none rounded-2xl p-5 text-xs mb-6 outline-none resize-none font-bold text-white text-right font-black font-black font-black font-black"></textarea>
-                                <button onclick="app.generateReport()" class="w-full bg-indigo-600 py-4 rounded-2xl font-black text-sm shadow-xl tracking-widest uppercase hover:bg-indigo-700 transition font-black font-black font-black">صياغة تقرير رسمي</button>
-                            </div>
-                        </div>
-                    </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-lg border-b-4 border-red-500 relative h-64">
+                    <h4 class="font-black text-lg mb-4 text-red-500 flex items-center gap-2"><i class="fas fa-map-marked-alt"></i> خريطة العمليات</h4>
+                    <div id="map" class="w-full h-[calc(100%-2rem)] rounded-xl bg-gray-200 dark:bg-gray-700"></div>
                 </div>
             </div>
         </section>
 
-        <!-- Section: Admin Dashboard -->
-        <section id="admin-dashboard" class="fade-in hidden space-y-12 no-print text-right font-black font-black">
-            <div class="bg-jcd-blue rounded-[3.5rem] p-12 text-white shadow-2xl flex flex-col md:flex-row items-center justify-between gap-10 relative overflow-hidden font-black font-black font-black font-black font-black">
-                <h2 class="text-6xl font-black tracking-tighter uppercase font-black font-black">لوحة الإدارة الماسية</h2>
-                <div class="bg-white/10 backdrop-blur-xl px-12 py-5 rounded-3xl border border-white/20 text-yellow-400 font-black text-2xl mt-8 inline-block shadow-2xl font-black font-black font-black transition hover:bg-white/20">سيادة المدير: <span id="adminNameSpan"></span></div>
+        <!-- Admin Dashboard -->
+        <section id="admin-dashboard" class="fade-in hidden space-y-8">
+            <div class="bg-gray-900 text-white rounded-[2.5rem] p-8 shadow-2xl flex justify-between items-center relative overflow-hidden">
+                <div class="relative z-10">
+                    <h2 class="text-3xl font-black text-yellow-400 mb-1">غرفة العمليات المركزية</h2>
+                    <p class="text-gray-400 text-sm">أهلاً بك، سيادة المدير <span id="adminNameSpan" class="text-white font-bold"></span></p>
+                </div>
+                <button onclick="app.openAdminScanner()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 transition relative z-10"><i class="fas fa-qrcode"></i> فحص هوية</button>
+                <div class="absolute inset-0 bg-jcd-blue/10"></div>
             </div>
 
-            <!-- Stats Widgets -->
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 font-black font-black font-black font-black font-black font-black">
-                <div class="admin-card border-t-red-600 bg-gradient-to-b from-white to-red-50/20 shadow-2xl font-black">
-                    <div class="flex justify-between items-center mb-6 font-black">
-                        <h3 class="font-black text-gray-400 text-[10px] uppercase tracking-widest font-black font-black font-black font-black">طلبات تغيير السر</h3>
-                        <span id="passReqCount" class="bg-red-100 text-red-600 h-10 w-10 rounded-full flex items-center justify-center font-black shadow-inner font-black font-black font-black">0</span>
+            <!-- Management Tools -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-lg border-l-8 border-orange-500">
+                    <h3 class="text-xl font-black mb-4 dark:text-white flex items-center"><i class="fas fa-truck ml-2 text-orange-500"></i> جاهزية الآليات</h3>
+                    <div id="vehicleList" class="space-y-3 mb-4 max-h-40 overflow-y-auto custom-scrollbar"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="vehName" placeholder="رقم الآلية" class="p-2 rounded bg-gray-100 dark:bg-gray-700 text-xs w-1/3">
+                        <select id="vehStatus" class="p-2 rounded bg-gray-100 dark:bg-gray-700 text-xs w-1/3"><option value="جاهزة">جاهزة</option><option value="صيانة">صيانة</option><option value="معطلة">معطلة</option></select>
+                        <button onclick="app.addVehicleStatus()" class="bg-orange-500 text-white px-4 rounded text-xs font-bold">تحديث</button>
                     </div>
-                    <div id="passReqList" class="space-y-4 max-h-64 overflow-y-auto pr-2 custom-scrollbar font-black font-black"></div>
                 </div>
-                <div class="admin-card border-t-green-500 shadow-2xl font-black font-black">
-                    <h3 class="font-black text-gray-400 text-[10px] uppercase mb-6 text-right font-black font-black">الميدان الآن <span id="rosterCount" class="bg-green-100 text-green-600 px-2 rounded-full font-black font-black">0</span></h3>
-                    <div id="liveAttendanceList" class="space-y-3 font-black font-black font-black font-black"></div>
-                </div>
-                <div class="admin-card border-t-indigo-600 flex flex-col justify-between shadow-2xl font-black font-black font-black">
-                    <button onclick="app.exportPDF()" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-xl text-lg font-black font-black font-black font-black">
-                        <i class="fas fa-file-pdf ml-2 font-black font-black"></i> تصدير الكشف PDF
-                    </button>
-                </div>
-                <div class="admin-card border-t-orange-500 shadow-2xl font-black font-black font-black font-black font-black font-black">
-                    <h3 class="font-black text-gray-400 text-[10px] uppercase mb-6 text-right font-black font-black">انتساب جديد</h3>
-                    <div id="regRequestsList" class="space-y-3 font-black font-black font-black font-black"></div>
+                
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-lg border-l-8 border-purple-500">
+                    <h3 class="text-xl font-black mb-4 dark:text-white flex items-center"><i class="fas fa-chalkboard-teacher ml-2 text-purple-500"></i> إدارة الدورات</h3>
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="newCourseTitle" placeholder="اسم الدورة" class="flex-grow p-2 rounded bg-gray-100 dark:bg-gray-700 text-xs">
+                        <button onclick="app.addCourse()" class="bg-purple-500 text-white px-4 rounded text-xs font-bold">طرح</button>
+                    </div>
+                    <div id="adminCoursesList" class="space-y-2 text-xs"></div>
                 </div>
             </div>
 
-            <!-- Master Management Grid -->
-            <div class="grid grid-cols-1 xl:grid-cols-3 gap-10 font-black font-black">
-                <div class="xl:col-span-1 space-y-10 font-black">
-                    <!-- Identity Tower -->
-                    <div class="admin-card border-t-gray-800 shadow-2xl font-black">
-                        <h3 class="font-black text-2xl mb-10 flex items-center gap-4 font-black text-gray-800 font-black font-black"><i class="fas fa-tools text-blue-500 ml-2 font-black font-black font-black font-black"></i> إعدادات الهوية</h3>
-                        <div class="space-y-8 font-black">
-                            <div class="text-right">
-                                <label class="block text-[10px] font-black text-gray-400 mb-3 uppercase font-black text-right font-black">تحديث الشعار (ملف)</label>
-                                <input type="file" id="uploadLogo" accept="image/*" onchange="app.handleLogoUpload(event)" class="w-full bg-gray-50 p-4 rounded-2xl font-black text-xs cursor-pointer border-2 border-dashed border-gray-200">
-                            </div>
-                            <div class="text-right font-black font-black font-black">
-                                <label class="block text-[10px] font-black text-gray-400 mb-3 uppercase font-black text-right font-black">الشريط الإخباري</label>
-                                <div class="flex gap-3">
-                                    <input type="text" id="adminTickerText" class="w-full bg-gray-50 p-5 rounded-2xl text-xs font-black outline-shadow-inner text-right font-black">
-                                    <button onclick="app.saveTicker()" class="bg-gray-800 text-white px-8 rounded-2xl font-black text-xs hover:bg-black transition shadow-lg font-black font-black">حفظ</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Messenger -->
-                    <div class="admin-card border-t-blue-400 shadow-2xl font-black">
-                        <h3 class="font-black text-2xl mb-10 text-blue-800 flex items-center gap-4 font-black tracking-tighter font-black font-black"><i class="fas fa-paper-plane-alt text-blue-400 ml-2 font-black font-black"></i> المراسلة والتعميم</h3>
-                        <div class="space-y-6 font-black font-black font-black font-black">
-                            <select id="msgRecipient" class="w-full bg-gray-50 p-5 rounded-2xl text-sm outline-none border font-black text-right appearance-none font-black font-black"></select>
-                            <textarea id="msgBody" placeholder="نص الرسالة..." class="w-full bg-gray-50 rounded-3xl p-6 text-sm h-44 outline-none resize-none border font-black text-right shadow-inner font-black"></textarea>
-                            <button onclick="app.adminSendMessage()" class="w-full bg-jcd-blue text-white py-6 rounded-[1.5rem] font-black shadow-2xl btn-hover text-lg tracking-widest uppercase transition-all font-black font-black">إرسال التعميم</button>
-                        </div>
-                    </div>
-
-                    <!-- News -->
-                    <div class="admin-card border-t-yellow-500 shadow-2xl font-black font-black font-black">
-                        <h3 class="font-black text-2xl mb-10 text-yellow-800 flex items-center gap-4 font-black font-black font-black"><i class="fas fa-newspaper text-yellow-500 ml-2 font-black font-black"></i> نشر أخبار البوابة</h3>
-                        <div class="space-y-6 font-black font-black font-black">
-                             <input type="text" id="newsTitle" placeholder="عنوان الخبر الرئيسي..." class="w-full p-4 bg-gray-50 rounded-2xl font-black outline-none text-right shadow-inner">
-                             <textarea id="newsContent" placeholder="تفاصيل الخبر..." class="w-full p-4 bg-gray-50 rounded-2xl font-black outline-none h-32 resize-none text-right shadow-inner font-black"></textarea>
-                             <button onclick="app.publishNews()" class="w-full bg-yellow-500 text-black py-4 rounded-[1.2rem] font-black shadow-lg hover:bg-yellow-600 transition font-black">نشر الخبر فوراً</button>
-                        </div>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-md border-r-4 border-green-500"><h4 class="text-xs text-gray-500 font-bold mb-1">الميدان الآن</h4><div class="text-2xl font-black text-green-600" id="rosterCount">0</div></div>
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-md border-r-4 border-red-500"><h4 class="text-xs text-gray-500 font-bold mb-1">طلبات السر</h4><div class="text-2xl font-black text-red-600" id="passReqCount">0</div></div>
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-md border-r-4 border-yellow-500"><h4 class="text-xs text-gray-500 font-bold mb-1">إنذارات نشطة</h4><div class="text-2xl font-black text-yellow-600" id="warningsCount">0</div></div>
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-md border-r-4 border-blue-500 flex flex-col justify-center gap-2">
+                    <button onclick="app.exportPDF('shifts')" class="bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded hover:bg-blue-100">كشف المناوبات</button>
+                    <button onclick="app.exportPDF('verified')" class="bg-green-50 text-green-600 text-xs font-bold py-2 rounded hover:bg-green-100">ساعات العمل</button>
                 </div>
+            </div>
 
-                <div class="xl:col-span-2 space-y-10 font-black text-right">
-                    <!-- Smart Add -->
-                    <div class="admin-card border-t-green-600 shadow-2xl font-black font-black font-black">
-                         <h3 class="font-black text-2xl mb-10 flex items-center gap-4 font-black font-black font-black"><i class="fas fa-magic text-green-500 ml-2 font-black font-black font-black font-black"></i> إضافة نشمي جديد (أتمتة ذكية)</h3>
-                         <div class="flex gap-4 font-black font-black">
-                             <input type="text" id="smartAddName" placeholder="اكتب اسم النشـمي الرباعي فقط..." class="flex-grow p-5 bg-gray-50 rounded-2xl text-sm font-black outline-none text-right shadow-inner font-black">
-                             <button onclick="app.adminSmartAdd()" class="bg-green-600 text-white px-10 rounded-[1.2rem] font-black shadow-lg font-black font-black font-black">إضافة آلياً</button>
-                         </div>
-                    </div>
+            <div class="bg-white dark:bg-gray-800 rounded-[2rem] p-6 shadow-lg">
+                <h3 class="font-black text-lg mb-4 dark:text-white border-b pb-2 dark:border-gray-700">سجل الدخول والمناوبات (Live)</h3>
+                <div id="liveAttendanceList" class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar"></div>
+            </div>
 
-                    <!-- User Management Table -->
-                    <div class="admin-card border-t-gray-700 shadow-2xl font-black font-black">
-                        <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-8 font-black font-black font-black">
-                            <h3 class="font-black text-3xl font-black uppercase tracking-tighter font-black font-black font-black">إدارة النشامى والمعرفات</h3>
-                            <input type="text" oninput="app.filterUsers(this.value)" placeholder="بحث بالاسم أو المعرف..." class="w-full md:w-96 bg-gray-50 px-10 py-5 rounded-3xl text-sm outline-none border focus:border-jcd-blue transition font-black text-right shadow-md font-black">
-                        </div>
-                        <div class="overflow-x-auto text-right font-black font-black font-black font-black">
-                            <table class="w-full text-right text-sm font-black font-black font-black font-black">
-                                <thead class="bg-gray-100 font-black text-[10px] text-gray-400 uppercase tracking-[0.2em] text-right font-black font-black font-black font-black font-black">
-                                    <tr><th class="p-6 rounded-r-3xl text-right font-black">النشـمي</th><th class="p-6 text-center font-black">المعرف</th><th class="p-6 text-center font-black text-jcd-blue font-black font-black font-black font-black font-black font-black">النقاط</th><th class="p-6 text-center font-black text-blue-600 font-black font-black font-black font-black">كلمة السر</th><th class="p-6 rounded-l-3xl text-left font-black font-black font-black">تحكم</th></tr>
-                                </thead>
-                                <tbody id="fullUsersTable" class="divide-y divide-gray-50 font-black text-right font-black font-black font-black font-black font-black font-black font-black font-black"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Shifts Hub -->
-                    <div class="admin-card border-t-purple-600 bg-gradient-to-br from-white to-purple-50/30 font-black font-black font-black font-black">
-                        <h3 class="font-black text-2xl mb-10 text-purple-900 flex items-center gap-4 font-black font-black font-black"><i class="fas fa-user-check text-purple-500 ml-2 font-black font-black"></i> سجل المناوبات والتحضير</h3>
-                        <div class="overflow-x-auto text-right font-black font-black font-black font-black">
-                            <table class="w-full text-right text-sm font-black font-black font-black font-black font-black font-black">
-                                <thead class="bg-gray-50 font-black text-[10px] text-gray-400 uppercase tracking-widest text-center font-black font-black font-black font-black font-black font-black font-black">
-                                    <tr><th class="p-6 rounded-r-3xl font-black font-black">اليوم والتاريخ</th><th class="p-6 rounded-l-3xl text-center font-black font-black font-black font-black">المسجلين (تحضير بنقرة)</th></tr>
-                                </thead>
-                                <tbody id="shiftsRegistryBody" class="divide-y divide-gray-100 text-center font-black font-black"></tbody>
-                            </table>
-                        </div>
-                    </div>
+            <div class="bg-white dark:bg-gray-800 rounded-[2rem] p-6 shadow-lg">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-black text-lg dark:text-white">إدارة النشامى</h3>
+                    <input type="text" oninput="app.filterUsers(this.value)" placeholder="بحث..." class="bg-gray-100 dark:bg-gray-700 text-xs p-2 rounded-lg outline-none w-40">
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs dark:text-gray-300">
+                        <thead class="bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-bold">
+                            <tr><th class="p-3 rounded-r-lg">الاسم</th><th class="p-3">المعرف</th><th class="p-3">الرصيد</th><th class="p-3 rounded-l-lg">إجراء</th></tr>
+                        </thead>
+                        <tbody id="fullUsersTable"></tbody>
+                    </table>
                 </div>
             </div>
         </section>
 
-        <!-- Hidden PDF -->
-        <div id="printableRoster" class="hidden p-10 bg-white text-black font-black">
-            <div class="border-[8px] border-black p-8 font-black font-black font-black font-black font-black">
-                <div class="flex justify-between items-start border-b-[6px] border-black pb-10 mb-10 font-black">
-                    <div class="text-right font-black text-xl space-y-2 font-black">
-                        <p>المديرية العامة للدفاع المدني</p>
-                        <p>مديرية المفرق</p>
-                    </div>
-                    <img id="printLogo" src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Jordan_Civil_Defence_Logo.png" class="h-32">
-                    <div class="text-left font-black text-xl space-y-2 text-left font-black">
-                        <p id="printTodayDate"></p>
-                        <p>سري للغاية</p>
-                    </div>
-                </div>
-                <div class="text-center mb-12 font-black"><h2 class="text-6xl font-black underline decoration-double underline-offset-[15px] uppercase font-black font-black">كشف حضور نشامى المفرق</h2></div>
-                <table class="w-full border-collapse border-[6px] border-black text-right text-2xl font-black font-black font-black font-black font-black">
-                    <thead><tr class="bg-gray-100 border-[6px] border-black font-black font-black"><th class="border-4 border-black p-6 text-center w-20 font-black">م</th><th class="border-4 border-black p-6 font-black font-black">الاسم الكامل</th><th class="border-4 border-black p-6 text-center font-black">المعرف</th><th class="border-4 border-black p-6 text-center font-black font-black">التوقيع</th></tr></thead>
-                    <tbody id="printBody"></tbody>
-                </table>
+        <!-- Registration Section -->
+        <section id="registration" class="fade-in hidden max-w-2xl mx-auto py-10 text-right">
+            <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl p-10 border-t-8 border-green-500">
+                <h2 class="text-3xl font-black text-center mb-8 text-green-600 dark:text-green-400">طلب انضمام للفريق</h2>
+                <form onsubmit="app.handleRegistration(event)" class="space-y-4">
+                    <input type="text" id="regName" placeholder="الاسم الرباعي" class="w-full p-4 bg-gray-50 dark:bg-gray-700 dark:text-white rounded-xl outline-none border focus:border-green-500 transition" required>
+                    <input type="text" id="regId" placeholder="الرقم الوطني" class="w-full p-4 bg-gray-50 dark:bg-gray-700 dark:text-white rounded-xl outline-none border focus:border-green-500 transition" required>
+                    <input type="password" id="regPass" placeholder="كلمة المرور" class="w-full p-4 bg-gray-50 dark:bg-gray-700 dark:text-white rounded-xl outline-none border focus:border-green-500 transition" required>
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl shadow-lg transition">إرسال الطلب</button>
+                </form>
             </div>
-        </div>
-
-        <footer class="no-print bg-white/80 backdrop-blur-md py-12 mt-12 border-t border-gray-100 text-center rounded-t-[3.5rem] shadow-inner font-black font-black font-black font-black font-black">
-            <div class="container mx-auto px-4 font-black font-black font-black">
-                <div class="inline-block bg-jcd-blue/5 px-10 py-4 rounded-full border-2 border-jcd-blue/10 shadow-lg transition-all hover:bg-jcd-blue/10 scale-105 font-black">
-                    <p class="text-sm text-jcd-blue font-black tracking-wide font-black">
-                        تم تطوير الموقع بواسطة معاذ احمد الخوالدة <span class="mx-4 text-gray-300 font-black font-black font-black">|</span> <span class="tracking-[0.1em] font-black font-black font-black">0772536229</span>
-                    </p>
-                </div>
-            </div>
-        </footer>
+        </section>
 
     </main>
 
+    <!-- Chat Widget -->
+    <div id="chatWidget" class="fixed bottom-6 right-6 z-50 hidden">
+        <button onclick="app.toggleChat()" class="bg-jcd-blue text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl hover:scale-110 transition relative"><i class="fas fa-comments"></i></button>
+        <div id="chatWindow" class="hidden absolute bottom-16 right-0 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col h-96 overflow-hidden">
+            <div class="bg-jcd-blue p-3 text-white font-bold text-sm flex justify-between"><span>غرفة العمليات</span><button onclick="app.toggleChat()"><i class="fas fa-times"></i></button></div>
+            <div id="chatMessages" class="flex-grow p-3 overflow-y-auto bg-gray-50 dark:bg-gray-900 space-y-2 text-xs"></div>
+            <div class="p-2 border-t dark:border-gray-700 flex gap-2"><input type="text" id="chatInput" class="flex-grow p-2 rounded bg-gray-100 dark:bg-gray-700 text-xs outline-none" placeholder="رسالة..."><button onclick="app.sendChatMessage()" class="text-blue-600"><i class="fas fa-paper-plane"></i></button></div>
+        </div>
+    </div>
+
+    <!-- Admin Tools Modal -->
+    <div id="adminToolsModal" class="hidden fixed inset-0 z-[250] bg-black/80 backdrop-blur-sm flex items-center justify-center fade-in p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-[2rem] shadow-2xl w-full max-w-md p-8 relative border-t-8 border-jcd-blue max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <h3 class="text-2xl font-black text-jcd-dark dark:text-white mb-2">أدوات الإدارة المتقدمة</h3>
+            <p id="toolUserName" class="text-sm text-jcd-blue dark:text-blue-300 font-bold mb-6"></p>
+            <input type="hidden" id="toolUserId">
+            
+            <div class="mb-6 border-b pb-6 dark:border-gray-700">
+                <h4 class="font-black text-sm mb-2 dark:text-white">منح وسام</h4>
+                <div id="manualBadgesList" class="flex flex-wrap gap-2 mb-2"></div>
+                <input type="text" id="badgeTitle" placeholder="اسم الوسام" class="w-full p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-xs mb-2">
+                <button onclick="app.grantManualBadge()" class="w-full bg-purple-600 text-white font-bold py-2 rounded-lg text-xs">منح</button>
+            </div>
+            <div class="mb-6 border-b pb-6 dark:border-gray-700">
+                <h4 class="font-black text-sm mb-2 dark:text-white">تقييم الأداء</h4>
+                <div class="flex justify-center gap-2 mb-2 text-xl text-gray-300" id="starRating">
+                    <i class="fas fa-star cursor-pointer hover:text-yellow-400" onclick="app.setRating(1)"></i>
+                    <i class="fas fa-star cursor-pointer hover:text-yellow-400" onclick="app.setRating(2)"></i>
+                    <i class="fas fa-star cursor-pointer hover:text-yellow-400" onclick="app.setRating(3)"></i>
+                    <i class="fas fa-star cursor-pointer hover:text-yellow-400" onclick="app.setRating(4)"></i>
+                    <i class="fas fa-star cursor-pointer hover:text-yellow-400" onclick="app.setRating(5)"></i>
+                </div>
+                <input type="hidden" id="selectedRating" value="0">
+                <input type="text" id="evalNote" placeholder="ملاحظة" class="w-full p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-xs mb-2">
+                <button onclick="app.submitEvaluation()" class="w-full bg-yellow-500 text-black font-bold py-2 rounded-lg text-xs">حفظ</button>
+            </div>
+            <div class="mb-6">
+                <h4 class="font-black text-sm mb-2 dark:text-white">إدارة العهدة</h4>
+                <div id="userInventoryList" class="space-y-1 mb-2 text-xs"></div>
+                <div class="flex gap-2">
+                    <input type="text" id="invItemName" placeholder="العهدة" class="flex-grow p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-xs">
+                    <button onclick="app.assignInventory()" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs">تسليم</button>
+                </div>
+            </div>
+            <button onclick="document.getElementById('adminToolsModal').classList.add('hidden')" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 py-2 rounded-lg font-bold text-xs">إغلاق</button>
+        </div>
+    </div>
+
+    <!-- Admin Edit User Modal -->
+    <div id="adminEditUserModal" class="hidden fixed inset-0 z-[250] bg-black/80 backdrop-blur-sm flex items-center justify-center fade-in p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-[2rem] shadow-2xl w-full max-w-md p-8 relative border-t-8 border-jcd-dark">
+            <h3 class="text-xl font-black mb-4 dark:text-white">تعديل الحساب</h3>
+            <input type="hidden" id="editUserId">
+            <input type="text" id="adminEditPass" placeholder="كلمة المرور الجديدة" class="w-full p-3 mb-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-xs">
+            <div class="flex gap-2 mb-3">
+                <input type="number" id="adminEditPoints" placeholder="النقاط" class="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-xs">
+                <select id="adminPointAction" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-xs"><option value="add">إضافة</option><option value="deduct">خصم</option></select>
+            </div>
+            <input type="text" id="adminEditReason" placeholder="السبب" class="w-full p-3 mb-4 bg-gray-50 dark:bg-gray-700 rounded-xl text-xs">
+            <button onclick="app.saveAdminUserEdit()" class="w-full bg-jcd-dark text-white py-3 rounded-xl font-bold text-xs">حفظ</button>
+            <button onclick="document.getElementById('adminEditUserModal').classList.add('hidden')" class="w-full mt-2 text-gray-500 text-xs">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- ID Card & Profile Modals -->
+    <div id="idCardModal" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm overflow-hidden relative">
+            <button onclick="document.getElementById('idCardModal').classList.add('hidden')" class="absolute top-2 left-2 z-20 text-white bg-black/50 rounded-full w-8 h-8"><i class="fas fa-times"></i></button>
+            <div id="digitalIDCard" class="bg-gradient-to-b from-jcd-blue to-black p-6 text-center text-white relative h-[450px] flex flex-col items-center">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Jordan_Civil_Defence_Logo.png" class="h-20 mb-4 drop-shadow-md">
+                <h2 class="text-2xl font-black mb-1">الدفاع المدني</h2>
+                <p class="text-xs text-yellow-400 mb-6 tracking-widest uppercase">بطاقة متطوع رسمية</p>
+                <div class="relative w-32 h-32 mb-4">
+                    <img id="idCardAvatar" src="" class="w-full h-full rounded-xl object-cover border-2 border-yellow-400 bg-gray-800">
+                </div>
+                <h3 id="idCardName" class="text-xl font-bold"></h3>
+                <p id="idCardNum" class="font-mono text-sm opacity-70 mt-1"></p>
+                <p id="idCardRank" class="mt-4 px-4 py-1 bg-white/20 rounded-full text-xs font-bold"></p>
+                <div class="mt-auto text-[10px] opacity-50 w-full border-t border-white/10 pt-2">مديرية المفرق - 2026</div>
+            </div>
+            <div class="p-4 flex justify-center"><button onclick="app.printID()" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold">تحميل البطاقة</button></div>
+        </div>
+    </div>
+
+    <div id="fullProfileModal" class="hidden fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-3xl rounded-3xl p-6 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="document.getElementById('fullProfileModal').classList.add('hidden')" class="absolute top-4 left-4 text-gray-400"><i class="fas fa-times text-xl"></i></button>
+            <h3 class="text-2xl font-black mb-6 dark:text-white">الملف الشخصي</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <img id="fpAvatar" class="w-20 h-20 rounded-full border-2 border-jcd-blue object-cover">
+                        <div>
+                            <h4 id="fpName" class="font-bold text-lg dark:text-white"></h4>
+                            <span id="fpRank" class="text-sm text-gray-500"></span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="bg-blue-50 dark:bg-gray-700 p-3 rounded-xl text-center"><span class="block font-black text-blue-600" id="fpPoints">0</span><span class="text-xs">نقطة</span></div>
+                        <div class="bg-green-50 dark:bg-gray-700 p-3 rounded-xl text-center"><span class="block font-black text-green-600" id="fpHours">0</span><span class="text-xs">ساعة</span></div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-xl">
+                        <h5 class="font-bold text-xs mb-2 dark:text-white">الأوسمة</h5>
+                        <div id="fpBadges" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-xl">
+                        <h5 class="font-bold text-xs mb-2 dark:text-white">الدورات</h5>
+                        <ul id="fpCourses" class="text-xs space-y-1 dark:text-gray-300"></ul>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-xl">
+                        <h5 class="font-bold text-xs mb-2 dark:text-white">النشاط الأخير</h5>
+                        <div id="fpHistory" class="text-xs space-y-1 max-h-32 overflow-y-auto dark:text-gray-300"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Admin Scanner -->
+    <div id="adminScannerModal" class="hidden fixed inset-0 z-[250] bg-black/90 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 text-center relative">
+            <button onclick="document.getElementById('adminScannerModal').classList.add('hidden')" class="absolute top-2 left-2 text-gray-400"><i class="fas fa-times"></i></button>
+            <h3 class="font-black text-xl mb-4 dark:text-white">التحقق من الهوية</h3>
+            <input type="text" id="scannerInput" placeholder="رقم المعرف" class="w-full p-3 bg-gray-100 dark:bg-gray-700 rounded-xl mb-4 text-center">
+            <button onclick="app.verifyVolunteer()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold">تحقق</button>
+            <div id="scanResult" class="hidden mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl border border-dashed">
+                <img id="scanAvatar" src="" class="w-16 h-16 rounded-full mx-auto mb-2">
+                <h4 id="scanName" class="font-bold dark:text-white"></h4>
+                <p id="scanRank" class="text-xs text-blue-500"></p>
+                <div id="scanStatus" class="mt-2 text-xs font-bold"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Logic Engine -->
     <script type="module">
+        // -----------------------------------------------------------
+        // CONFIGURATION SECTION (For GitHub Deployment)
+        // -----------------------------------------------------------
+        // If deploying to GitHub, replace the 'undefined' checks with your actual keys.
+        // Keep the empty string for apiKey if using the Gemini environment injection.
+        
+        const GITHUB_FIREBASE_CONFIG = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.firebasestorage.app",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
+        };
+        const GITHUB_GEMINI_KEY = "YOUR_GEMINI_KEY"; // Required for AI features on GitHub
+        // -----------------------------------------------------------
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyCzbJ_BCreCrOgkDq_zCdJ1O3FCDcguoXA",
-          authDomain: "civil-defense-mafraq-b7b9d.firebaseapp.com",
-          projectId: "civil-defense-mafraq-b7b9d",
-          storageBucket: "civil-defense-mafraq-b7b9d.firebasestorage.app",
-          messagingSenderId: "14265166108",
-          appId: "1:14265166108:web:2f1ac0d4c89b2fe9cff2d9"
-        };
+        // Config Selection Logic
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : GITHUB_FIREBASE_CONFIG;
+        const apiKey = typeof __app_id !== 'undefined' ? "" : GITHUB_GEMINI_KEY; 
+        const appId = 'mafraq-diamond-v24-final'; // New version to reset bad data
 
-        const GEMINI_KEY = "AIzaSyDXfI33tFUOSj9JBEF26lg3PxvGJ4C607w";
         const fireApp = initializeApp(firebaseConfig);
         const auth = getAuth(fireApp);
         const db = getFirestore(fireApp);
-        const appId = 'mafraq-diamond-elite-master-final-v21';
 
         window.app = {
-            data: { users: [], settings: {}, suggestions: [], gallery: [], news: [], currentUser: null },
-            charts: { perfChart: null },
-            uploadedAvatarBase64: null,
-            
+            data: { users: [], chats: [], currentUser: null, vehicles: [], courses: [] },
+            map: null,
+
             async init() {
-                try { await signInAnonymously(auth); } catch (e) {}
-                onAuthStateChanged(auth, (user) => { if (user) app.setupListeners(); });
+                if(localStorage.getItem('jcd_theme') === 'dark') document.documentElement.classList.add('dark');
+                
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (e) { console.error("Auth:", e); }
+
+                onAuthStateChanged(auth, (user) => { 
+                    if (user) app.setupListeners(); 
+                });
             },
 
             setupListeners() {
-                onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), (snap) => {
-                    app.data.settings = snap.exists() ? snap.data() : { ticker: "أهلاً بكم في بوابة نشامى المفرق المتطورة", logo: "" };
-                    app.applySettings();
+                const cols = ['users', 'chats', 'vehicles', 'courses'];
+                cols.forEach(c => {
+                    onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', c), (snap) => {
+                        app.data[c] = [];
+                        snap.forEach(d => app.data[c].push({ ...d.data(), _id: d.id }));
+                        if(c === 'users') { app.seedData(); app.checkSession(); app.renderUI(); }
+                        if(c === 'chats') app.renderChat();
+                    }, (error) => console.log('Snapshot error:', error));
                 });
-                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
-                    const users = []; snap.forEach(d => users.push({ ...d.data(), _id: d.id }));
-                    app.data.users = users;
-                    app.seedData();
-                    app.checkSession();
-                    app.renderUI();
-                });
-                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'gallery'), (snap) => {
-                    const gal = []; snap.forEach(d => gal.push({ ...d.data(), _id: d.id }));
-                    app.data.gallery = gal;
-                    app.renderGallery();
-                });
-                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'news'), (snap) => {
-                    const news = []; snap.forEach(d => news.push({ ...d.data(), _id: d.id }));
-                    app.data.news = news;
-                    app.renderNews();
-                });
-                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'suggestions'), (snap) => {
-                    const suggs = []; snap.forEach(d => suggs.push({ ...d.data(), _id: d.id }));
-                    app.data.suggestions = suggs;
-                    app.renderUI();
-                });
-                document.getElementById('globalLoader').style.display = 'none';
+                
+                const loader = document.getElementById('globalLoader');
+                if(loader) loader.style.display = 'none';
             },
 
             async seedData() {
-                if (app.data.users.length > 20) return;
-                const adminList = [
-                    { id: '100', name: 'عطوفة المدير العام', pass: '2026', role: 'admin' },
-                    { id: '101', name: 'معاذ الخوالدة', pass: '2026', role: 'admin', isOfficial: true },
-                    { id: '18', name: 'سجود شديفات', pass: '4568', role: 'volunteer', isOfficial: true },
-                    { id: '3', name: 'معاذ الخوالدة', pass: '7741', role: 'volunteer', isOfficial: true }
+                if (app.data.users.length > 0) return;
+                
+                const officials = [
+                    { id: '101', name: 'معاذ الخوالدة', pass: '2026', role: 'admin', isOfficial: true, bio: 'مسؤول الدفعة' },
+                    { id: '18', name: 'سجود شديفات', pass: '4568', role: 'volunteer', isOfficial: true, bio: 'مسؤولة المتطوعات' },
+                    { id: '3', name: 'معاذ الخوالدة', pass: '7741', role: 'volunteer', isOfficial: true, bio: 'حساب متطوع' },
+                    { id: '100', name: 'عطوفة المدير العام', pass: '2026', role: 'admin', isOfficial: true }
                 ];
+
                 const volNames = [
                     'مالك عليمات', 'هدى', 'حسام الحسبان', 'إبراهيم سعود', 'خولة نضال', 'رسول الخزاعلة', 'سلوى الصقور',
                     'شرف الحراحشة', 'عبد الرحمن يونس', 'عمر ياسين', 'امين المصري', 'فرحان الخوالدة', 'حور العرقان',
@@ -487,36 +528,30 @@
                     'اريج النعيمات', 'عزيزة السقال', 'باسل', 'في', 'حمدان عليمات', 'ختام ابو قديري', 'لارا العجلوني',
                     'ميار الهواري', 'ريتاج', 'رويدا', 'ربى', 'سوار', 'سندس عليمات', 'رند العناسوة'
                 ];
-                
-                const all = [...adminList.map(a=>({...a, status:'active'}))];
-                volNames.forEach((n, idx) => {
-                    const id = (idx + 1).toString();
-                    if (!all.some(x => x.id === id)) {
-                        all.push({ id, name: n, pass: "1234", role: 'volunteer', status: 'active' });
-                    }
-                });
 
-                for (const u of all) {
-                    if (!app.data.users.some(e => e.id === u.id)) {
-                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), { ...u, stats:{points:0, hours:0}, history:[], shifts:[], notifications:[] });
-                    }
+                // Seed Officials
+                for (const u of officials) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), { ...u, status: 'active', stats: {points: 500, hours: 100}, history: [], notifications: [] });
+                }
+
+                // Seed Volunteers
+                for (let i = 0; i < volNames.length; i++) {
+                    const id = (i + 1).toString();
+                    // Skip if ID conflicts with officials
+                    if (officials.some(o => o.id === id)) continue;
+                    
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id), {
+                        id, name: volNames[i], pass: "1234", role: 'volunteer', status: 'active',
+                        stats: {points: 0, hours: 0}, history: [], notifications: []
+                    });
                 }
             },
 
             async checkSession() {
-                const uid = localStorage.getItem('jcd_uid_master_v21');
+                const uid = localStorage.getItem('jcd_uid_v24');
                 if (uid) {
-                    const user = app.data.users.find(u => u.id === uid);
-                    if (user && !app.data.currentUser) { app.data.currentUser = user; app.showDashboard(user); app.checkDailyBonus(); }
-                }
-            },
-
-            async checkDailyBonus() {
-                const u = app.data.currentUser;
-                const today = new Date().toLocaleDateString('en-US');
-                if (u && u.lastLoginBonus !== today) {
-                    const newPoints = (u.stats?.points || 0) + 5;
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), { lastLoginBonus: today, "stats.points": newPoints });
+                    const u = app.data.users.find(x => x.id === uid);
+                    if (u) { app.data.currentUser = u; app.showDashboard(u); }
                 }
             },
 
@@ -524,435 +559,353 @@
                 document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
                 const target = document.getElementById(id);
                 if (target) target.classList.remove('hidden');
-                window.scrollTo(0, 0);
+                if (id === 'nashama-section') app.renderNashamaSection();
+                window.scrollTo(0,0);
             },
 
-            showLogin(type) { app.showSection('login'); app.switchLoginTab(type); },
+            showLogin(type) {
+                app.showSection('login');
+                app.switchLoginTab(type);
+            },
+
             switchLoginTab(type) {
-                const elements = ['tab-volunteer', 'tab-admin', 'loginTitle'];
-                const refs = {}; elements.forEach(e => refs[e] = document.getElementById(e));
-                if(refs['tab-volunteer']) refs['tab-volunteer'].classList.remove('active');
-                if(refs['tab-admin']) refs['tab-admin'].classList.remove('active');
-                const activeTab = document.getElementById(`tab-${type}`);
-                if(activeTab) activeTab.classList.add('active');
-                if(refs.loginTitle) refs.loginTitle.innerText = type === 'admin' ? 'دخول لوحة الإدارة' : 'دخول النشامى';
+                const volBtn = document.getElementById('tab-volunteer');
+                const adminBtn = document.getElementById('tab-admin');
+                const title = document.getElementById('loginTitle');
+                
+                volBtn.className = type === 'volunteer' ? 'w-1/2 py-3 rounded-xl text-sm font-black transition-all bg-white dark:bg-gray-600 shadow-sm text-jcd-blue dark:text-white' : 'w-1/2 py-3 rounded-xl text-sm font-black transition-all text-gray-500 hover:text-jcd-blue';
+                adminBtn.className = type === 'admin' ? 'w-1/2 py-3 rounded-xl text-sm font-black transition-all bg-white dark:bg-gray-600 shadow-sm text-jcd-blue dark:text-white' : 'w-1/2 py-3 rounded-xl text-sm font-black transition-all text-gray-500 hover:text-jcd-blue';
+                title.innerText = type === 'admin' ? 'دخول قيادة العمليات' : 'تسجيل دخول النشامى';
             },
 
-            async handleLogin(event) {
-                event.preventDefault();
+            async handleLogin(e) {
+                e.preventDefault();
                 const id = document.getElementById('username').value.trim();
                 const pass = document.getElementById('password').value.trim();
+                
+                if (app.data.users.length === 0) return alert("جاري تحميل البيانات.. حاول بعد ثواني");
+                
                 const user = app.data.users.find(u => u.id === id);
-                if (!user || user.pass !== pass) return app.showToast("خطأ في البيانات");
-                if (user.status !== 'active') return app.showToast("الحساب معلق");
+                if (!user || user.pass !== pass) return alert("بيانات غير صحيحة");
+                if (user.status === 'banned') return alert("الحساب محظور. راجع الإدارة.");
+                if (user.status === 'pending') return alert("الحساب قيد التفعيل.");
+
                 app.data.currentUser = user;
-                localStorage.setItem('jcd_uid_master_v21', user.id);
+                localStorage.setItem('jcd_uid_v24', user.id);
                 app.showDashboard(user);
+                
+                if(user.role === 'volunteer') app.generateDailyMessage(user.name);
             },
 
             logout() {
                 app.data.currentUser = null;
-                localStorage.removeItem('jcd_uid_master_v21');
-                app.showSection('home');
-                const uM = document.getElementById('userMenu'); if(uM) uM.classList.add('hidden');
-                const gL = document.getElementById('guestLinks'); if(gL) gL.classList.remove('hidden');
+                localStorage.removeItem('jcd_uid_v24');
+                location.reload();
             },
 
             showDashboard(user) {
-                const gL = document.getElementById('guestLinks'); if(gL) gL.classList.add('hidden');
-                const uM = document.getElementById('userMenu'); if(uM) uM.classList.remove('hidden');
-                const uND = document.getElementById('userNameDisplay'); if(uND) uND.innerText = user.name;
-                const badge = document.getElementById('userRoleBadge');
-                if (badge) {
-                    badge.innerText = user.role === 'admin' ? 'إدارة' : 'متطوع';
-                    badge.className = user.role === 'admin' ? 'badge-admin' : 'badge-volunteer';
+                document.getElementById('guestLinks').classList.add('hidden');
+                document.getElementById('userMenu').classList.remove('hidden');
+                document.getElementById('userNameDisplay').innerText = user.name;
+                
+                if (user.role === 'admin') {
+                    app.showSection('admin-dashboard');
+                    app.renderAdminDashboard();
+                } else {
+                    app.showSection('volunteer-dashboard');
+                    app.renderVolunteerUI();
+                    document.getElementById('chatWidget').classList.remove('hidden');
+                    setTimeout(() => app.initMap(), 1000);
                 }
-                user.role === 'admin' ? app.showSection('admin-dashboard') : (app.showSection('volunteer-dashboard'), app.renderVolunteerUI());
+            },
+
+            renderUI() {
+                app.renderNashamaSection();
+                if (app.data.currentUser) {
+                    const freshUser = app.data.users.find(u => u.id === app.data.currentUser.id);
+                    if(freshUser) app.data.currentUser = freshUser;
+                    
+                    if (app.data.currentUser.role === 'admin') app.renderAdminDashboard();
+                    else app.renderVolunteerUI();
+                }
+            },
+
+            renderNashamaSection() {
+                const grid = document.getElementById('nashamaGrid');
+                if(!grid) return;
+                
+                const sorted = app.data.users.filter(u => u.role !== 'admin' && u.status === 'active')
+                    .sort((a,b) => (b.isOfficial ? 1 : 0) - (a.isOfficial ? 1 : 0) || (b.stats?.points || 0) - (a.stats?.points || 0));
+
+                grid.innerHTML = sorted.map(u => {
+                    const isLeader = u.isOfficial || u.name.includes('معاذ') || u.name.includes('سجود');
+                    const rank = app.getRankInfo(u.stats?.hours);
+                    const cardStyle = isLeader ? 'official-card transform scale-105 shadow-2xl' : 'bg-white dark:bg-gray-800 shadow-lg border border-gray-100 dark:border-gray-700';
+                    
+                    return `
+                    <div class="${cardStyle} rounded-3xl p-6 text-center relative overflow-hidden group hover:-translate-y-2 transition duration-300">
+                        ${isLeader ? '<div class="absolute top-0 right-0 bg-yellow-400 text-black text-[10px] font-black px-3 py-1 rounded-bl-xl z-10"><i class="fas fa-crown"></i> قيادة</div>' : ''}
+                        <div class="relative w-24 h-24 mx-auto mb-4">
+                            <img src="${u.avatar || 'https://via.placeholder.com/150'}" class="w-full h-full rounded-full object-cover border-4 ${isLeader ? 'border-yellow-400 shadow-[0_0_15px_rgba(251,191,36,0.6)]' : rank.class}">
+                        </div>
+                        <h3 class="font-black text-lg mb-1 truncate">${u.name}</h3>
+                        <p class="text-xs opacity-70 mb-4 font-bold">${rank.title}</p>
+                        <div class="flex justify-center gap-4 text-xs font-bold bg-black/10 dark:bg-white/5 py-2 rounded-xl">
+                            <span class="flex items-center gap-1"><i class="fas fa-star text-yellow-400"></i> ${u.stats?.points||0}</span>
+                            <span class="flex items-center gap-1"><i class="fas fa-clock text-green-400"></i> ${u.stats?.hours||0}</span>
+                        </div>
+                    </div>`;
+                }).join('');
             },
 
             renderVolunteerUI() {
-                const u = app.data.currentUser; if(!u) return;
-                const vND = document.getElementById('volNameDisplay'); if(vND) vND.innerText = u.name;
-                const vP = document.getElementById('volPoints'); if(vP) vP.innerText = u.stats?.points || 0;
-                const vH = document.getElementById('volHours'); if(vH) vH.innerText = (u.stats?.hours || 0).toFixed(1);
-                const vBD = document.getElementById('volBioDisplay'); if(vBD) vBD.innerText = u.bio || "نشـمي فخور";
-                const dA = document.getElementById('dashAvatar'); if(dA) dA.src = u.avatar || "https://via.placeholder.com/150";
-                const offBadge = document.getElementById('dashOfficialBadge');
-                if (offBadge) {
-                    if (u.id === '101' || u.id === '3' || u.id === '18' || u.isOfficial) offBadge.classList.remove('hidden'); else offBadge.classList.add('hidden');
+                const u = app.data.currentUser;
+                document.getElementById('volNameDisplay').innerText = u.name;
+                document.getElementById('volBioDisplay').innerText = u.bio || "متطوع نشيط";
+                document.getElementById('dashAvatar').src = u.avatar || "https://via.placeholder.com/150";
+                
+                const rank = app.getRankInfo(u.stats?.hours);
+                document.getElementById('dashRankBadge').innerText = rank.title;
+                document.getElementById('dashRankBadge').className = `absolute -bottom-3 right-1/2 translate-x-1/2 px-3 py-1 rounded-full font-black shadow-lg whitespace-nowrap text-xs ${rank.badgeColor}`;
+
+                const gate = document.getElementById('gateContainer');
+                if(!u.currentSession) {
+                    gate.innerHTML = `<button onclick="app.checkIn()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-black shadow-lg transition">دخول الميدان</button>`;
+                } else if (u.currentSession.status === 'pending') {
+                    gate.innerHTML = `<div class="bg-yellow-500/20 text-yellow-300 p-3 rounded-xl border border-yellow-500 font-bold text-sm animate-pulse">بانتظار الموافقة...</div>`;
+                } else {
+                    gate.innerHTML = `<div class="text-white mb-2 font-bold text-sm">دخلت: ${u.currentSession.time}</div><button onclick="app.checkOut()" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-black shadow-lg transition">إنهاء (Check-Out)</button>`;
                 }
-                app.renderGate(); app.renderShifts(); app.renderHistory(); app.renderLeaderboard(); app.initCharts(u);
-            },
-
-            initCharts(u) {
-                const canvas = document.getElementById('performanceChart');
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                if (app.charts.perfChart) app.charts.perfChart.destroy();
-                const labels = (u.history || []).slice(-7).map(h => h.date.split('-')[1]?.trim() || "سابق");
-                const points = (u.history || []).slice(-7).map(h => h.points);
-                app.charts.perfChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels.length ? labels : ['سابق'],
-                        datasets: [{ label: 'النقاط', data: points.length ? points : [0], borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.1)', fill: true, tension: 0.4, borderWidth: 3 }]
-                    },
-                    options: { responsive: true, plugins: { legend: { display: false } } }
-                });
-            },
-
-            renderGate() {
-                const u = app.data.currentUser;
-                const container = document.getElementById('gateContainer');
-                if (!container) return;
-                container.innerHTML = u.currentSession ? 
-                    `<button onclick="app.checkOut()" class="w-full bg-red-600 py-4 rounded-[1.2rem] font-black text-white shadow-2xl transition hover:bg-red-700">إنهاء المهمة (Check-Out)</button>` :
-                    `<button onclick="app.checkIn()" class="w-full bg-green-600 py-4 rounded-[1.2rem] font-black text-white shadow-2xl transition hover:bg-green-700">دخول الميدان</button>`;
-            },
-
-            async checkIn() {
-                const now = new Date();
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', app.data.currentUser.id), { currentSession: { start: now.toISOString(), time: now.toLocaleTimeString('ar-JO') } });
-            },
-
-            async checkOut() {
-                const u = app.data.currentUser;
-                const hours = (new Date() - new Date(u.currentSession.start)) / (1000 * 60 * 60);
-                const points = Math.max(5, Math.floor(hours * 15));
-                const today = new Date();
-                const dayName = today.toLocaleDateString('ar-JO', {weekday:'long'});
-                const record = { date: `${dayName} - ${today.toLocaleDateString('ar-JO')}`, start: u.currentSession.time, end: new Date().toLocaleTimeString('ar-JO'), hours: hours.toFixed(2), points };
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), { currentSession: null, history: [...(u.history || []), record], "stats.points": (u.stats.points || 0) + points, "stats.hours": (u.stats.hours || 0) + hours });
-            },
-
-            renderLeaderboard() {
-                const list = document.getElementById('leaderboardList'); if(!list) return;
-                const top10 = [...app.data.users].filter(u => u.role === 'volunteer' || u.isOfficial).sort((a,b) => (b.stats?.points || 0) - (a.stats?.points || 0)).slice(0, 10);
-                list.innerHTML = top10.map((u, i) => `<div class="flex justify-between items-center p-4 rounded-3xl ${u.id === app.data.currentUser.id ? 'bg-yellow-400/20 border-2 border-yellow-400/40 shadow-xl' : 'bg-white/5'} font-black transition hover:scale-105">
-                    <div class="flex items-center gap-4 text-right">
-                        <span class="font-black text-sm ${i<3?'text-yellow-400':'text-gray-500'} font-black">#${i+1}</span>
-                        <img src="${u.avatar || 'https://via.placeholder.com/150'}" class="h-10 w-10 rounded-full border shadow-sm">
-                        <span class="text-xs font-black">${u.name} ${u.id === '101' || u.id === '3' || u.id === '18' ? '👑' : ''}</span>
-                    </div>
-                    <span class="text-[11px] font-black text-yellow-400">${u.stats?.points || 0} pt</span>
-                </div>`).join('');
             },
 
             async renderAdminDashboard() {
                 const users = app.data.users;
-                const active = users.filter(u => u.currentSession);
-                const passReqs = users.filter(u => u.passwordRequest?.status === 'pending');
-                const regReqs = users.filter(u => u.status === 'pending');
-
-                const refs = ['adminNameSpan', 'rosterCount', 'passReqCount', 'suggestionsCount', 'rosterCurrentDate', 'liveAttendanceList', 'passReqList', 'printTodayDate', 'regRequestsList'];
-                const els = {}; refs.forEach(r => els[r] = document.getElementById(r));
-
-                if(els.adminNameSpan) els.adminNameSpan.innerText = app.data.currentUser.name;
-                if(els.rosterCount) els.rosterCount.innerText = active.length;
-                if(els.passReqCount) els.passReqCount.innerText = passReqs.length;
-                if(els.suggestionsCount) els.suggestionsCount.innerText = app.data.suggestions.length;
-                if(els.rosterCurrentDate) els.rosterCurrentDate.innerText = new Date().toLocaleDateString('ar-JO', {weekday:'long', day:'numeric', month:'long'});
-                if(els.printTodayDate) els.printTodayDate.innerText = new Date().toLocaleDateString('ar-JO');
-
-                if(els.liveAttendanceList) els.liveAttendanceList.innerHTML = active.map(u => `<div class="bg-green-50 p-4 rounded-2xl border border-green-100 flex justify-between items-center font-black text-xs"><span>${u.name}</span><span class="text-green-600 bg-white px-2 py-1 rounded-lg border font-black">${u.currentSession.time}</span></div>`).join('') || '<p class="text-center py-4 font-black text-xs text-gray-300">No Active Heroes</p>';
-
-                if(els.passReqList) els.passReqList.innerHTML = passReqs.map(u => `<div class="bg-red-50 p-4 rounded-2xl border border-red-100 flex flex-col gap-2 font-black text-xs"><div class="flex justify-between items-center"><span>${u.name}</span><span class="text-red-600 font-black">${u.passwordRequest.newPass}</span></div><button onclick="app.approvePass('${u.id}')" class="bg-red-600 text-white py-2 rounded-xl text-[10px] font-black uppercase">موافقة وتحديث</button></div>`).join('') || '<p class="text-center py-4 italic font-black text-xs text-gray-300">None</p>';
-
-                if(els.regRequestsList) els.regRequestsList.innerHTML = regReqs.map(u => `<div class="bg-orange-50 p-3 rounded-2xl flex justify-between items-center border border-orange-100 text-[10px] font-black font-black"><span>${u.name}</span><button onclick="app.adminAction('${u.id}', 'approve')" class="bg-green-600 text-white px-4 py-1 rounded-xl">تفعيل</button></div>`).join('') || '<p class="text-center text-gray-300 text-[10px] py-4 italic">None</p>';
-
+                const pending = users.filter(u => u.currentSession?.status === 'pending');
+                const active = users.filter(u => u.currentSession?.status === 'active');
+                
+                document.getElementById('adminNameSpan').innerText = app.data.currentUser.name;
+                document.getElementById('rosterCount').innerText = active.length;
+                
+                let liveHTML = '';
+                if(pending.length > 0) {
+                    liveHTML += `<div class="mb-2"><h5 class="text-xs font-bold text-yellow-500 mb-2">طلبات معلقة (${pending.length})</h5>`;
+                    liveHTML += pending.map(u => `
+                        <div class="bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded-lg flex justify-between items-center text-xs mb-1 dark:text-white border border-yellow-200 dark:border-yellow-700">
+                            <span>${u.name}</span>
+                            <div class="flex gap-1">
+                                <button onclick="app.adminApprove('${u.id}')" class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">✓</button>
+                                <button onclick="app.adminReject('${u.id}')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">✗</button>
+                            </div>
+                        </div>`).join('');
+                    liveHTML += `</div>`;
+                }
+                
+                liveHTML += active.map(u => `
+                    <div class="bg-green-50 dark:bg-green-900/20 p-2 rounded-lg flex justify-between items-center text-xs mb-1 dark:text-white border border-green-200 dark:border-green-700">
+                        <span>${u.name}</span>
+                        <span class="text-green-600 dark:text-green-400 font-mono">${u.currentSession.time}</span>
+                    </div>`).join('');
+                
+                document.getElementById('liveAttendanceList').innerHTML = liveHTML || '<p class="text-center text-xs text-gray-400 py-4">الميدان هادئ حالياً</p>';
+                
                 app.renderUserTable(users);
-                app.renderShiftsRegistry();
-                app.renderMessenger();
+                app.renderVehicles();
             },
 
             renderUserTable(list) {
                 const table = document.getElementById('fullUsersTable');
-                if (!table) return;
+                if(!table) return;
                 table.innerHTML = list.sort((a,b) => (a.role === 'admin' ? -1 : 1)).map(u => `
-                    <tr class="hover:bg-gray-50 transition border-b border-gray-100 font-bold font-black text-right">
-                        <td class="p-5 flex items-center gap-3 text-right font-black font-black"><img src="${u.avatar || 'https://via.placeholder.com/50'}" class="h-10 w-10 rounded-full border shadow-sm"> <span>${u.name} ${u.id === '101' || u.id === '3' || u.id === '18' ? '👑' : ''}</span></td>
-                        <td class="p-5 text-center font-mono text-gray-400 font-black font-black">${u.id}</td>
-                        <td class="p-5 text-center font-black text-jcd-blue text-lg font-black">${u.stats?.points || 0}</td>
-                        <td class="p-5 text-center font-mono text-blue-600 font-black font-black font-black">${u.pass}</td>
-                        <td class="p-5 text-left flex items-center justify-end h-full font-black">
-                            <button onclick="app.adminAction('${u.id}', 'bonus')" class="text-purple-600 mx-2 hover:scale-125 transition font-black"><i class="fas fa-gift"></i></button>
-                            <button onclick="app.adminAction('${u.id}', 'editFull')" class="text-blue-500 mx-2 hover:scale-125 transition font-black"><i class="fas fa-edit"></i></button>
-                            <button onclick="app.adminAction('${u.id}', 'delete')" class="text-red-500 mx-2 hover:scale-125 transition font-black"><i class="fas fa-trash"></i></button>
+                    <tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                        <td class="p-3 flex items-center gap-2">
+                            <img src="${u.avatar || 'https://via.placeholder.com/150'}" class="w-8 h-8 rounded-full">
+                            <span>${u.name} ${u.isOfficial ? '👑' : ''}</span>
+                        </td>
+                        <td class="p-3 font-mono text-gray-400">${u.id}</td>
+                        <td class="p-3 text-jcd-blue dark:text-blue-400 font-bold">${u.stats?.points || 0}</td>
+                        <td class="p-3">
+                            <button onclick="app.openAdminTools('${u.id}')" class="text-jcd-gold mx-1"><i class="fas fa-tools"></i></button>
+                            <button onclick="app.openAdminEditUser('${u.id}')" class="text-blue-500 mx-1"><i class="fas fa-edit"></i></button>
                         </td>
                     </tr>
                 `).join('');
             },
 
+            async checkIn() {
+                const now = new Date();
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', app.data.currentUser.id), {
+                    currentSession: { start: now.toISOString(), time: now.toLocaleTimeString('ar-JO'), status: 'pending' }
+                });
+            },
+            async checkOut() {
+                const u = app.data.currentUser;
+                const hours = (new Date() - new Date(u.currentSession.start)) / (1000 * 60 * 60);
+                const points = Math.floor(hours * 5) + 5;
+                const rec = { date: new Date().toLocaleDateString('ar-JO'), hours: hours.toFixed(2), points };
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), {
+                    currentSession: null,
+                    history: [...(u.history||[]), rec],
+                    "stats.points": (u.stats.points||0) + points,
+                    "stats.hours": (u.stats.hours||0) + hours
+                });
+            },
+            async adminApprove(uid) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), { "currentSession.status": 'active' }); },
+            async adminReject(uid) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), { currentSession: null }); },
+
+            async generateDailyMessage(name) {
+                const today = new Date().toDateString();
+                if(localStorage.getItem('ai_msg_date') === today) {
+                    document.getElementById('dailyMessageText').innerText = localStorage.getItem('ai_msg_content');
+                    return;
+                }
+                try {
+                    const prompt = `وجه رسالة تحفيزية قصيرة جداً (سطر واحد) باللهجة الأردنية للمتطوع ${name} في الدفاع المدني.`;
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    const d = await res.json();
+                    const msg = d.candidates?.[0]?.content?.parts?.[0]?.text || "همتكم عالية يا نشامى!";
+                    document.getElementById('dailyMessageText').innerText = msg;
+                    localStorage.setItem('ai_msg_date', today);
+                    localStorage.setItem('ai_msg_content', msg);
+                } catch(e) { document.getElementById('dailyMessageText').innerText = "يا نشمي، الوطن بيكبر بعطائك. الله يقويك!"; }
+            },
+
+            getRankInfo(hours = 0) {
+                if (hours >= 300) return { title: 'قائد ميداني', class: 'rank-border-leader', badgeColor: 'bg-yellow-400 text-black' };
+                if (hours >= 100) return { title: 'منقذ', class: 'rank-border-rescuer', badgeColor: 'bg-orange-500 text-white' };
+                if (hours >= 50) return { title: 'نشمي', class: 'rank-border-nashmi', badgeColor: 'bg-green-500 text-white' };
+                return { title: 'مبتدئ', class: 'rank-border-beginner', badgeColor: 'bg-gray-500 text-white' };
+            },
+
+            initMap() {
+                if(app.map) return;
+                app.map = L.map('map').setView([32.3424, 36.2043], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(app.map);
+            },
+
+            toggleChat() {
+                const w = document.getElementById('chatWindow');
+                w.classList.toggle('hidden');
+                if(!w.classList.contains('hidden')) app.renderChat();
+            },
+            async sendChatMessage() {
+                const inp = document.getElementById('chatInput');
+                if(!inp.value.trim()) return;
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chats'), { text: inp.value, sender: app.data.currentUser.name, time: Date.now() });
+                inp.value = '';
+            },
+            renderChat() {
+                const box = document.getElementById('chatMessages');
+                box.innerHTML = app.data.chats.sort((a,b)=>a.time-b.time).map(m => `<div class="mb-2 ${m.sender===app.data.currentUser.name ? 'text-left' : 'text-right'}"><span class="text-[10px] opacity-50 block">${m.sender}</span><span class="inline-block px-3 py-2 rounded-lg text-xs ${m.sender===app.data.currentUser.name ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-900'}">${m.text}</span></div>`).join('');
+                box.scrollTop = box.scrollHeight;
+            },
+            
+            toggleDarkMode() { document.documentElement.classList.toggle('dark'); },
+            filterNashama(q) {
+                const grid = document.getElementById('nashamaGrid');
+                const users = app.data.users.filter(u => u.name.includes(q) && u.role !== 'admin');
+                grid.innerHTML = users.map(u => `<div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow text-center"><img src="${u.avatar || 'https://via.placeholder.com/150'}" class="w-16 h-16 rounded-full mx-auto mb-2 object-cover"><h4 class="font-bold text-sm dark:text-white">${u.name}</h4><span class="text-xs text-gray-500">${app.getRankInfo(u.stats?.hours).title}</span></div>`).join('');
+            },
             filterUsers(q) {
                 const filtered = app.data.users.filter(u => u.name.includes(q) || u.id.includes(q));
                 app.renderUserTable(filtered);
             },
-
-            async adminSmartAdd() {
-                const name = document.getElementById('smartAddName').value.trim();
-                if(!name) return alert("اكتب الاسم أولاً");
-                const randomId = Math.floor(1000 + Math.random() * 9000).toString();
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', randomId), { id: randomId, name, pass: "2026", role:'volunteer', status:'active', stats:{points:0, hours:0}, history:[], shifts:[], notifications:[] });
-                document.getElementById('smartAddName').value = ""; app.showToast("تمت الإضافة بنجاح!");
+            
+            // Admin Tools Handlers
+            openAdminTools(uid) {
+                const u = app.data.users.find(x => x.id === uid);
+                document.getElementById('toolUserId').value = uid;
+                document.getElementById('toolUserName').innerText = `المتطوع: ${u.name}`;
+                document.getElementById('adminToolsModal').classList.remove('hidden');
+                
+                // Inventory & Badges lists rendering (simplified)
+                const badgesList = document.getElementById('manualBadgesList');
+                badgesList.innerHTML = (u.customBadges || []).map(b => `<span class="${b.color} px-2 py-1 rounded text-xs flex items-center gap-1"><i class="fas fa-${b.icon}"></i> ${b.title}</span>`).join('') || '<span class="text-gray-400 text-xs">لا يوجد أوسمة</span>';
+                
+                const list = document.getElementById('userInventoryList');
+                list.innerHTML = (u.inventory || []).map(item => `<div class="flex justify-between bg-gray-50 p-2 rounded"><span>${item.name}</span><button onclick="app.returnInventory('${uid}', '${item.id}')" class="text-red-500 text-[10px]">إرجاع</button></div>`).join('') || '<p class="text-gray-400">لا توجد عهدة</p>';
             },
-
-            async publishNews() {
-                const title = document.getElementById('newsTitle').value.trim();
-                const content = document.getElementById('newsContent').value.trim();
-                if(!title || !content) return alert("املاً البيانات");
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'news'), { title, content, date: new Date().toLocaleDateString('ar-JO') });
-                document.getElementById('newsTitle').value = ""; document.getElementById('newsContent').value = "";
-                app.showToast("تم النشر.");
+            async grantManualBadge() {
+                const uid = document.getElementById('toolUserId').value;
+                const title = document.getElementById('badgeTitle').value;
+                if (!title) return;
+                const u = app.data.users.find(x => x.id === uid);
+                const newBadge = { id: Date.now(), title, icon: 'medal', color: 'text-yellow-500 bg-yellow-100', date: new Date().toLocaleDateString('ar-JO') };
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), { customBadges: [...(u.customBadges || []), newBadge] });
+                app.openAdminTools(uid);
             },
-
-            renderNews() {
-                const feed = document.getElementById('news-feed-container');
-                if(!feed) return;
-                feed.innerHTML = app.data.news.slice().reverse().map(n => `<div class="bg-white/90 p-6 rounded-[2rem] shadow-xl text-right border-r-8 border-jcd-gold font-black">
-                    <h4 class="text-xl font-black text-jcd-blue mb-2 font-black">${n.title}</h4>
-                    <p class="text-sm text-gray-700 leading-relaxed font-bold font-black">${n.content}</p>
-                    <span class="text-[9px] text-gray-400 block mt-4 font-black">${n.date}</span>
-                </div>`).join('');
+            async assignInventory() {
+                const uid = document.getElementById('toolUserId').value;
+                const name = document.getElementById('invItemName').value;
+                if(!name) return;
+                const u = app.data.users.find(x => x.id === uid);
+                const newItem = { id: Date.now().toString(), name, date: new Date().toLocaleDateString('ar-JO') };
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), { inventory: [...(u.inventory || []), newItem] });
+                app.openAdminTools(uid);
             },
-
-            async approvePass(uid) {
-                const u = app.data.users.find(x=>x.id === uid);
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), { pass: u.passwordRequest.newPass, passwordRequest: null });
-                app.showToast("تم تحديث السر.");
+            async returnInventory(uid, itemId) {
+                const u = app.data.users.find(x => x.id === uid);
+                const newInv = u.inventory.filter(i => i.id !== itemId);
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), { inventory: newInv });
+                app.openAdminTools(uid);
             },
-
-            async adminAction(id, action) {
-                const u = app.data.users.find(x=>x.id===id);
-                if(action === 'bonus') {
-                    const pts = parseInt(prompt(`بونص لـ ${u.name}:`));
-                    if(!isNaN(pts)) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id), { "stats.points": (u.stats?.points || 0) + pts });
-                } else if(action === 'editFull') {
-                    const nN = prompt("الاسم الجديد:", u.name);
-                    const nI = prompt("المعرف الجديد:", u.id);
-                    const nP = prompt("كلمة السر الجديدة:", u.pass);
-                    if(nI && nI !== u.id) {
-                        const old = {...u}; delete old._id; old.id=nI; old.name=nN||u.name; old.pass=nP||u.pass;
-                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', nI), old);
-                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id));
-                    } else if(nN || nP) {
-                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id), { name:nN||u.name, pass:nP||u.pass });
-                    }
-                } else if(action === 'delete') {
-                    if(confirm("حذف النشـمي نهائياً؟")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id));
-                } else if(action === 'approve') {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id), { status: 'active' });
-                }
+            
+            // Vehicles
+            async addVehicleStatus() {
+                const name = document.getElementById('vehName').value;
+                const status = document.getElementById('vehStatus').value;
+                if(!name) return;
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'vehicles'), { name, status, date: new Date().toLocaleDateString('ar-JO') });
             },
-
-            handleAvatarUpload(event) {
-                const file = event.target.files[0]; if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (e) => { app.uploadedAvatarBase64 = e.target.result; app.showToast("تم التجهيز."); };
-                reader.readAsDataURL(file);
+            renderVehicles() {
+                const list = document.getElementById('vehicleList');
+                if(!list) return;
+                list.innerHTML = app.data.vehicles.map(v => `<div class="flex justify-between items-center bg-white/10 p-2 rounded text-xs"><span>${v.name}</span><span class="${v.status === 'جاهزة' ? 'text-green-400' : 'text-red-400'} font-bold">${v.status}</span></div>`).join('');
             },
-
-            async handleLogoUpload(event) {
-                const file = event.target.files[0]; if (!file) return;
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { logo: e.target.result }, { merge: true });
-                    app.showToast("تم تحديث الشعار.");
-                };
-                reader.readAsDataURL(file);
-            },
-
-            async handleGalleryUpload(event) {
-                const file = event.target.files[0]; if (!file) return;
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'gallery'), { url: e.target.result, date: Date.now() });
-                    app.showToast("تم الرفع للمعرض.");
-                };
-                reader.readAsDataURL(file);
-            },
-
-            async saveProfile() {
-                const eB = document.getElementById('editBio');
-                const rP = document.getElementById('reqPass');
-                if(!eB || !rP) return;
-                const data = { bio: eB.value };
-                if(rP.value.trim()) data.passwordRequest = { newPass: rP.value.trim(), status:'pending' };
-                if (app.uploadedAvatarBase64) data.avatar = app.uploadedAvatarBase64;
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', app.data.currentUser.id), data);
-                app.closeProfileEdit(); app.showToast("تم التحديث.");
-            },
-
-            applySettings() {
-                const s = app.data.settings;
-                const tTxt = document.getElementById('newsTickerText');
-                const tCont = document.getElementById('news-ticker-container');
-                if (tTxt && tCont && s.ticker) { tCont.classList.remove('hidden'); tTxt.innerText = s.ticker; }
-                if (s.logo) { 
-                    ['navLogo', 'heroLogo', 'loaderLogo', 'printLogo'].forEach(id => {
-                        const el = document.getElementById(id); if(el) el.src = s.logo;
-                    });
-                }
-            },
-
-            showToast(msg) {
-                const toast = document.createElement('div');
-                toast.className = 'bg-jcd-blue text-white px-8 py-4 rounded-2xl shadow-2xl border-2 border-yellow-400 fade-in text-xs font-black font-black font-black font-black font-black';
-                toast.innerText = msg;
-                const tc = document.getElementById('toastContainer');
-                if(tc) tc.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
-            },
-
-            renderUI() {
-                app.renderGallery();
-                app.renderNews();
-                if (app.data.currentUser) {
-                    const up = app.data.users.find(u => u.id === app.data.currentUser.id);
-                    if (up) { app.data.currentUser = up; up.role === 'admin' ? app.renderAdminDashboard() : app.renderVolunteerUI(); }
-                }
-            },
-
-            renderGallery() {
-                const gridFull = document.getElementById('fullGalleryGrid');
-                if (gridFull) gridFull.innerHTML = app.data.gallery.slice().reverse().map(img => `<div class="gallery-img-container shadow-2xl font-black font-black font-black font-black"><img src="${img.url}"></div>`).join('') || '<p class="col-span-full text-center py-20 font-black text-gray-300 font-black">المعرض خالي حالياً</p>';
-                const adminPrev = document.getElementById('adminGalleryPreview');
-                if (adminPrev) adminPrev.innerHTML = app.data.gallery.map(img => `<div class="relative group font-black"><img src="${img.url}" class="h-14 w-14 object-cover rounded-xl border-2 font-black font-black font-black font-black font-black"><button onclick="app.deleteGalleryImage('${img._id}')" class="absolute -top-1 -right-1 bg-red-600 text-white h-5 w-5 rounded-full text-[9px] flex items-center justify-center shadow-lg transition-all opacity-0 group-hover:opacity-100 font-black"><i class="fas fa-times"></i></button></div>`).join('');
-            },
-
-            renderShiftsRegistry() {
-                const body = document.getElementById('shiftsRegistryBody'); if (!body) return;
-                body.innerHTML = "";
-                const weekdays = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-                for(let i=0; i<7; i++) {
-                    const d = new Date(); d.setDate(new Date().getDate() + i);
-                    const rawDate = d.toISOString().split('T')[0];
-                    const label = `${weekdays[d.getDay()]} - ${rawDate}`;
-                    const reged = app.data.users.filter(u => u.shifts && u.shifts.some(s => s.date === rawDate));
-                    body.innerHTML += `<tr class="hover:bg-indigo-50/50 transition border-b border-gray-100 font-black">
-                        <td class="p-6 font-black text-xs text-gray-500 text-center border-l font-black">${label}</td>
-                        <td class="p-6 flex flex-wrap gap-4 justify-center font-black">
-                            ${reged.map(u => `<button onclick="app.manualCheckIn('${u.id}')" class="bg-white hover:bg-green-600 hover:text-white px-6 py-2 rounded-2xl text-[11px] font-black border-2 border-indigo-100 transition shadow-md font-black font-black">${u.name}</button>`).join('') || '<span class="text-gray-300 italic text-[11px] font-black">None</span>'}
-                        </td>
-                    </tr>`;
-                }
-            },
-
-            async callAI(p) {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_KEY}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({contents:[{parts:[{text:p}]}]}) });
-                const d = await res.json(); return d.candidates?.[0]?.content?.parts?.[0]?.text || "خطأ اتصال";
-            },
-
-            async askAI() {
-                const input = document.getElementById('safetyInput'); const chat = document.getElementById('safetyChat');
-                if(!input || !input.value) return;
-                const q = input.value; input.value = "";
-                chat.innerHTML += `<div class="bg-white/10 p-4 rounded-2xl mr-10 text-white font-bold mb-2 text-right shadow-sm font-black font-black">س: ${q}</div>`;
-                const a = await app.callAI(`أجب كخبير دفاع مدني أردني باختصار ومهنية: ${q}`);
-                chat.innerHTML += `<div class="bg-blue-500/40 p-4 rounded-2xl ml-10 text-blue-50 mb-4 font-bold text-right shadow-xl font-black font-black font-black font-black font-black">${marked.parse(a)}</div>`;
-                chat.scrollTop = chat.scrollHeight;
-            },
-
-            async generateReport() {
-                const ctx = document.getElementById('reportContext');
-                if(!ctx || !ctx.value) return alert("أدخل التفاصيل");
-                document.getElementById('reportModal').classList.remove('hidden');
-                const out = document.getElementById('reportOutput');
-                out.innerText = "جاري الصياغة الفنية للتقرير...";
-                const a = await app.callAI(`اكتب تقرير مهمة رسمي بأسلوب الدفاع المدني الأردني. اسم النشـمي: ${app.data.currentUser.name}. المعرف: ${app.data.currentUser.id}. التفاصيل: ${ctx.value}. ابدأ بـ "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ" وانتهِ بخاتمة رسمية.`);
-                out.innerText = a;
-            },
-
-            renderHistory() {
-                const body = document.getElementById('historyBody'); if (!body) return;
-                body.innerHTML = (app.data.currentUser.history || []).slice().reverse().map(h => `<tr><td class="p-6 font-black text-xs text-right border-l font-black font-black">${h.date}</td><td class="p-6 text-green-600 font-bold text-center font-black">${h.start}</td><td class="p-6 text-red-600 font-bold text-center font-black font-black">${h.end}</td><td class="p-6 font-black text-jcd-blue text-center font-black">+${h.points}</td></tr>`).join('') || '<tr><td colspan="4" class="text-center py-20 italic text-gray-300 font-black">No Records</td></tr>';
-            },
-
-            renderShifts() {
-                const grid = document.getElementById('shiftsGrid'); if (!grid) return;
-                grid.innerHTML = "";
-                const today = new Date();
-                const autoDates = [];
-                for(let i=1; i<=14; i++) {
-                    const d = new Date(today); d.setDate(new Date().getDate() + i);
-                    if (d.getDay() === 1 || d.getDay() === 2) autoDates.push(d); 
-                }
-                autoDates.forEach(d => {
-                    const rawDate = d.toISOString().split('T')[0];
-                    const dayName = d.toLocaleDateString('ar-JO', {weekday:'long'});
-                    const shift = (app.data.currentUser.shifts || []).find(s => s.date === rawDate);
-                    grid.innerHTML += `<div class="bg-gray-50 p-6 rounded-[1.5rem] border-2 border-transparent hover:border-jcd-blue transition flex justify-between items-center shadow-sm font-black">
-                        <div class="flex flex-col text-right font-black"><span class="text-[10px] font-black text-gray-400 uppercase font-black">${dayName}</span><span class="text-sm font-black font-black">${rawDate}</span></div>
-                        ${shift ? `<span class="text-[10px] font-black uppercase px-4 py-1 rounded-full border ${shift.status==='approved'?'bg-green-100 text-green-700 font-black':'bg-orange-100 text-orange-700 font-black'} font-black font-black font-black font-black">${shift.status}</span>` : `<button onclick="app.requestShift('${rawDate}')" class="bg-jcd-blue text-white px-6 py-2 rounded-xl text-xs font-black transition-all hover:bg-blue-900 font-black font-black font-black">حـجز</button>`}
-                    </div>`;
-                });
-            },
-
-            async requestShift(date) {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', app.data.currentUser.id), { shifts: [...(app.data.currentUser.shifts || []), { date, status: 'approved' }] });
-            },
-
-            exportPDF() {
-                const element = document.getElementById('printableRoster'); element.classList.remove('hidden');
-                const active = app.data.users.filter(u => u.currentSession);
-                document.getElementById('printBody').innerHTML = active.map((u, i) => `<tr><td class="border-4 border-black p-4 text-center font-black font-black">${i+1}</td><td class="border-4 border-black p-4 font-black text-right font-black">${u.name}</td><td class="border-4 border-black p-4 text-center font-mono font-black">${u.id}</td><td class="border-4 border-black p-4 text-center font-mono font-black font-black font-black">${u.currentSession.time}</td><td class="border-4 border-black p-4 font-black"></td></tr>`).join('');
-                const opt = { margin: 0.1, filename: `كشف_حضور.pdf`, image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 3 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
-                html2pdf().set(opt).from(element).save().then(() => element.classList.add('hidden'));
-            },
-
-            async manualCheckIn(uid) {
-                if(!confirm("تحضير يدوي؟")) return;
-                const now = new Date();
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), { currentSession: { start: now.toISOString(), time: now.toLocaleTimeString('ar-JO') } });
-            },
-
-            async deleteGalleryImage(id) { if(confirm("حذف؟")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'gallery', id)); },
-
-            openProfileEdit() {
-                const u = app.data.currentUser;
-                const eB = document.getElementById('editBio');
-                const rP = document.getElementById('reqPass');
-                const pM = document.getElementById('profileModal');
-                const rS = document.getElementById('passReqStatus');
-                if(eB) eB.value = u.bio || "";
-                if(rP) rP.value = "";
-                if(rS) { if (u.passwordRequest?.status === 'pending') rS.classList.remove('hidden'); else rS.classList.add('hidden'); }
-                if(pM) pM.classList.remove('hidden');
-            },
-            closeProfileEdit() { const pM = document.getElementById('profileModal'); if(pM) pM.classList.add('hidden'); },
-            toggleNotifications() { app.showSection('volunteer-dashboard'); const nL = document.getElementById('notificationsList'); if(nL) nL.scrollIntoView({ behavior:'smooth' }); },
-            copyReport() { const rO = document.getElementById('reportOutput'); if(rO) { navigator.clipboard.writeText(rO.innerText); alert("تم النسخ بنجاح"); } },
-            async saveTicker() { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { ticker: document.getElementById('adminTickerText').value }, { merge: true }); app.showToast("تم الحفظ"); },
-            async adminSendMessage() {
-                const recId = document.getElementById('msgRecipient').value;
-                const body = document.getElementById('msgBody').value;
-                if(!body) return;
-                const msg = { id: Date.now(), text: body, date: new Date().toLocaleDateString('ar-JO') };
-                if(recId === 'all') {
-                    for(const u of app.data.users) { if(u.role !== 'admin') await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), { notifications: [...(u.notifications || []), msg] }); }
-                } else {
-                    const target = app.data.users.find(x => x.id === recId);
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', recId), { notifications: [...(target.notifications || []), msg] });
-                }
-                document.getElementById('msgBody').value = ""; app.showToast("تم الإرسال.");
-            },
-            renderMessenger() {
-                const rec = document.getElementById('msgRecipient'); if(!rec) return;
-                const curr = rec.value;
-                rec.innerHTML = '<option value="all">تعميم لكافة النشامى</option>';
-                app.data.users.filter(u => u.role !== 'admin').forEach(u => rec.innerHTML += `<option value="${u.id}">${u.name} (${u.id})</option>`);
-                rec.value = curr || 'all';
-            },
-            async deleteSuggestion(id) { if(confirm("حذف المقترح؟")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suggestions', id)); },
+            
+            // Registration
             async handleRegistration(event) {
                 event.preventDefault();
                 const id = document.getElementById('regId').value.trim();
                 const name = document.getElementById('regName').value.trim();
                 const pass = document.getElementById('regPass').value.trim();
-                const loc = document.getElementById('regLocation').value;
                 if(app.data.users.some(u=>u.id===id)) return alert("المعرف مسجل");
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id), { id, name, pass, role:'volunteer', status:'pending', location: loc, stats:{points:0, hours:0}, history:[], shifts:[], notifications:[] });
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id), { id, name, pass, role:'volunteer', status:'pending', stats:{points:0, hours:0} });
                 alert("تم الإرسال."); app.showSection('home');
             },
+            
+            // Modals
+            openIDModal() {
+                const u = app.data.currentUser;
+                document.getElementById('idCardName').innerText = u.name;
+                document.getElementById('idCardNum').innerText = `ID: ${u.id}`;
+                document.getElementById('idCardRank').innerText = app.getRankInfo(u.stats?.hours).title;
+                document.getElementById('idCardAvatar').src = u.avatar || "https://via.placeholder.com/150";
+                document.getElementById('idCardModal').classList.remove('hidden');
+            },
+            printID() {
+                const element = document.getElementById('digitalIDCard');
+                const opt = { margin: 0, filename: `ID_${app.data.currentUser.id}.png`, image: { type: 'png', quality: 1 }, html2canvas: { scale: 3 } };
+                html2pdf().set(opt).from(element).save();
+            },
+            openFullProfile() {
+                const u = app.data.currentUser;
+                document.getElementById('fpName').innerText = u.name;
+                document.getElementById('fpRank').innerText = app.getRankInfo(u.stats?.hours).title;
+                document.getElementById('fpAvatar').src = u.avatar || "https://via.placeholder.com/150";
+                document.getElementById('fpPoints').innerText = u.stats?.points || 0;
+                document.getElementById('fpHours').innerText = (u.stats?.hours || 0).toFixed(1);
+                
+                const badgesDiv = document.getElementById('fpBadges');
+                let badgesHTML = '';
+                if(u.isOfficial) badgesHTML += '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">👑 قيادة</span>';
+                if(u.customBadges) badgesHTML += u.customBadges.map(b => `<span class="${b.color} px-2 py-1 rounded text-xs"><i class="fas fa-${b.icon}"></i> ${b.title}</span>`).join('');
+                badgesDiv.innerHTML = badgesHTML || '<span class="text-xs text-gray-400">لا توجد أوسمة بعد</span>';
+                
+                document.getElementById('fullProfileModal').classList.remove('hidden');
+            }
         };
 
         window.addEventListener('load', () => app.init());
