@@ -652,8 +652,23 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, addDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "dummy", projectId: "dummy" };
-        const apiKey = typeof __app_id !== 'undefined' ? "" : ""; 
+        // -----------------------------------------------------------------------------------------
+        // --- منطقة الإعدادات (تم التحديث بناءً على الصورة المرفقة) ---
+        // -----------------------------------------------------------------------------------------
+        const YOUR_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyCzbJ_BCreCrOgkDq_zCdJ103FCDcguoXA",
+            authDomain: "civil-defense-mafraq-b7b9d.firebaseapp.com",
+            projectId: "civil-defense-mafraq-b7b9d",
+            storageBucket: "civil-defense-mafraq-b7b9d.firebasestorage.app",
+            messagingSenderId: "14265166108",
+            appId: "1:14265166108:web:2f1ac0d4c89b2fe9cff2d9"
+        };
+        
+        const YOUR_GEMINI_KEY = "AIzaSyBEMwEU2XqjyCfqKvlRrRRoAaqxTIXRSpQ"; // (اختياري) ضع مفتاح Gemini API هنا إذا أردت تفعيل الذكاء الاصطناعي
+        // -----------------------------------------------------------------------------------------
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : YOUR_FIREBASE_CONFIG;
+        const apiKey = typeof __app_id !== 'undefined' ? "" : YOUR_GEMINI_KEY; 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'mafraq-diamond-v33-platinum-release'; 
 
         const fireApp = initializeApp(firebaseConfig);
