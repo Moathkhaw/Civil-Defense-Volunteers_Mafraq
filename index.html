@@ -907,7 +907,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, addDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         // -----------------------------------------------------------------------------------------
         // --- منطقة الإعدادات ---
@@ -931,7 +930,6 @@
         const fireApp = initializeApp(firebaseConfig);
         const auth = getAuth(fireApp);
         const db = getFirestore(fireApp);
-        const storage = getStorage(fireApp);
 
         // --- FIXED STATIC USERS (Source of Truth) ---
         const STATIC_USERS = [
@@ -1215,7 +1213,7 @@
                 document.getElementById('profileEditModal').classList.remove('hidden');
             },
 
-            // --- Updated Profile Update Logic (Hybrid: Storage -> Base64 Fallback) ---
+            // --- Updated Profile Update Logic (Using Base64 - Free & Easy) ---
             async updateProfile() {
                 const u = app.data.currentUser;
                 const pass = document.getElementById('newPassVol').value;
@@ -1223,43 +1221,51 @@
                 const fileInput = document.getElementById('avatarUpload');
                 
                 let avatar = u.avatar;
+
+                // Create update object dynamically
                 const updateData = { pass, bio };
 
+                // تحويل الصورة لنص Base64 لتخزينها في الداتابيس مباشرة
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
-                    const storageRef = ref(storage, `users/${u.id}/profile.jpg`);
                     
-                    alert("جاري رفع الصورة...");
-                    
-                    try {
-                        // 1. Try Firebase Storage
-                        await uploadBytes(storageRef, file);
-                        const url = await getDownloadURL(storageRef);
-                        updateData.avatar = url;
-                    } catch (storageError) {
-                        console.warn("Storage failed, falling back to Base64:", storageError);
-                        // 2. Fallback to Base64 if storage fails (e.g. permissions)
-                        try {
-                            const base64 = await new Promise((resolve, reject) => {
-                                const reader = new FileReader();
-                                reader.onload = (e) => resolve(e.target.result);
-                                reader.onerror = (e) => reject(e);
-                                reader.readAsDataURL(file);
-                            });
-                            updateData.avatar = base64;
-                        } catch (e) {
-                            alert("فشل رفع الصورة كلياً.");
+                    // ضغط وتصغير الصورة قبل التحويل (لتفادي حجم 1MB)
+                    const resizeImage = (file) => new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = (event) => {
+                            const img = new Image();
+                            img.src = event.target.result;
+                            img.onload = () => {
+                                const elem = document.createElement('canvas');
+                                const width = 300; // تصغير العرض إلى 300 بكسل
+                                const scaleFactor = width / img.width;
+                                elem.width = width;
+                                elem.height = img.height * scaleFactor;
+                                const ctx = elem.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, img.height * scaleFactor);
+                                resolve(elem.toDataURL('image/jpeg', 0.7)); // ضغط الجودة 70%
+                            }
                         }
+                    });
+
+                    try {
+                        alert("جاري معالجة ورفع الصورة...");
+                        const base64 = await resizeImage(file);
+                        updateData.avatar = base64; 
+                    } catch (e) {
+                        alert("خطأ في قراءة الملف");
+                        return;
                     }
                 }
 
                 try {
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), updateData);
-                    alert("تم تحديث الملف الشخصي بنجاح!");
+                    alert("تم تحديث الملف الشخصي");
                     document.getElementById('profileEditModal').classList.add('hidden');
                 } catch (error) {
                     console.error(error);
-                    alert("حدث خطأ في قاعدة البيانات: " + error.message);
+                    alert("حدث خطأ أثناء الحفظ: " + error.message);
                 }
             },
 
@@ -1640,6 +1646,7 @@
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 const dateText = dateObj.toLocaleDateString('ar-JO', options);
                 
+                // Use optional chaining just in case
                 const dateDisplay = document.getElementById('adminRosterDate');
                 if(dateDisplay) dateDisplay.innerText = dateText;
 
@@ -1848,34 +1855,38 @@
                 }
             },
 
-            // --- Updated Logo Update Logic (Hybrid: Storage -> Base64 Fallback) ---
+            // --- Updated Logo Update Logic (Base64 + Compression + Size Limit) ---
             async updateLogo() {
                 const input = document.getElementById('logoUploader');
                 if (input.files.length > 0) {
                     const file = input.files[0];
-                    const storageRef = ref(storage, 'settings/site_logo.png');
-                    try {
-                        alert("جاري رفع الشعار... يرجى الانتظار");
-                        await uploadBytes(storageRef, file);
-                        const downloadURL = await getDownloadURL(storageRef);
-                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { logo: downloadURL }, { merge: true });
-                        alert("تم تحديث شعار الموقع بنجاح");
-                    } catch (error) {
-                         console.warn("Storage failed, falling back to Base64:", error);
-                         // Fallback to Base64 if storage fails
-                         try {
-                            const base64 = await new Promise((resolve, reject) => {
-                                const reader = new FileReader();
-                                reader.onload = (e) => resolve(e.target.result);
-                                reader.onerror = (e) => reject(e);
-                                reader.readAsDataURL(file);
-                            });
-                             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { logo: base64 }, { merge: true });
-                             alert("تم تحديث شعار الموقع بنجاح (وضع احتياطي)");
-                         } catch (e) {
-                             alert("حدث خطأ أثناء الرفع: " + error.message);
-                         }
+                    
+                    // 1. Size Check (< 700KB)
+                    if (file.size > 700 * 1024) {
+                         alert("حجم الصورة كبير جداً! يرجى اختيار صورة أصغر من 700 كيلوبايت.");
+                         return;
                     }
+
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const base64 = e.target.result;
+                        try {
+                            // 2. Save directly to Firestore
+                            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { logo: base64 }, { merge: true });
+                            
+                            // 3. Immediate UI Update
+                            const navLogo = document.getElementById('navLogo');
+                            const heroLogo = document.getElementById('heroLogo');
+                            if(navLogo) navLogo.src = base64;
+                            if(heroLogo) heroLogo.src = base64;
+
+                            alert("تم تحديث شعار الموقع بنجاح!");
+                        } catch(err) {
+                            console.error("Logo update error:", err);
+                            alert("حدث خطأ أثناء حفظ الشعار. قد تكون الصورة كبيرة جداً لقاعدة البيانات.");
+                        }
+                    };
+                    reader.readAsDataURL(file);
                 }
             },
             
