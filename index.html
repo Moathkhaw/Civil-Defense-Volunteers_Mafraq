@@ -94,9 +94,33 @@
         #map { height: 100%; width: 100%; border-radius: 1rem; z-index: 0; }
         .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Connection Status Indicator */
+        #connection-status {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            z-index: 1000;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen text-right bg-gray-50 text-slate-800 dark:bg-[#020617] dark:text-slate-100 transition-colors duration-300 selection:bg-jcd-gold selection:text-black">
+
+    <!-- Status Indicator -->
+    <div id="connection-status" class="bg-gray-800 text-gray-400">
+        <div class="status-dot bg-gray-500"></div>
+        <span>جاري الاتصال...</span>
+    </div>
 
     <!-- Navbar -->
     <nav class="sticky top-0 z-50 border-b border-white/10 bg-[#1e3a8a]/90 dark:bg-[#020617]/80 backdrop-blur-md shadow-lg transition-all duration-300">
@@ -463,6 +487,22 @@
                 </div>
             </div>
 
+            <!-- NEW: Admin Daily Approved Roster Section -->
+            <div class="bg-white dark:bg-[#1e293b] p-6 rounded-[2rem] shadow-lg border-t-4 border-green-500 mt-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg dark:text-white flex items-center gap-2">
+                        <i class="fas fa-calendar-check text-green-500"></i> جدول المناوبات المعتمد
+                    </h3>
+                    <div class="flex gap-2">
+                         <input type="date" id="adminRosterPicker" onchange="app.renderAdminRoster(this.value)" class="bg-gray-100 dark:bg-[#0f172a] dark:text-white text-xs p-2 rounded-lg border dark:border-gray-700 outline-none">
+                         <button onclick="app.exportDailyRoster()" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-700"><i class="fas fa-download"></i> تحميل القائمة</button>
+                    </div>
+                </div>
+                <div id="adminApprovedRosterGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <p class="col-span-full text-center text-gray-400 text-xs py-4">جاري تحميل الجدول...</p>
+                </div>
+            </div>
+
             <!-- Management Tools -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Exceptional Shifts -->
@@ -604,6 +644,13 @@
                 <input type="text" id="newVolName" placeholder="الاسم الرباعي" class="input-field w-full p-3.5 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded-xl text-sm outline-none border dark:border-gray-700">
                 <input type="text" id="newVolId" placeholder="المعرف (ID)" class="input-field w-full p-3.5 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded-xl text-sm outline-none border dark:border-gray-700">
                 <input type="text" id="newVolPass" placeholder="كلمة المرور" class="input-field w-full p-3.5 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded-xl text-sm outline-none border dark:border-gray-700">
+                
+                <!-- NEW: Role Selection -->
+                <select id="newVolRole" class="input-field w-full p-3.5 bg-gray-50 dark:bg-[#0f172a] dark:text-white rounded-xl text-sm outline-none border dark:border-gray-700">
+                    <option value="volunteer">متطوع</option>
+                    <option value="admin">إدارة</option>
+                </select>
+
                 <div class="flex gap-3 mt-2">
                     <button onclick="app.adminAddUser()" class="flex-grow bg-blue-600 text-white font-bold py-3 rounded-xl text-sm hover:bg-blue-700">إضافة</button>
                     <button onclick="document.getElementById('addNashmiModal').classList.add('hidden')" class="w-1/3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold py-3 rounded-xl text-sm">إلغاء</button>
@@ -935,15 +982,31 @@
 
             async init() {
                 if(localStorage.getItem('jcd_theme') === 'dark') document.documentElement.classList.add('dark');
+                
+                const statusEl = document.getElementById('connection-status');
+                const dot = statusEl.querySelector('.status-dot');
+                const text = statusEl.querySelector('span');
+
                 try {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } else {
                         await signInAnonymously(auth);
                     }
-                } catch (e) { console.error("Auth:", e); }
+                } catch (e) { 
+                    console.error("Auth Error:", e);
+                    dot.classList.replace('bg-gray-500', 'bg-red-500');
+                    text.innerText = "خطأ في الاتصال (تأكد من تفعيل Auth)";
+                }
 
-                onAuthStateChanged(auth, (user) => { if (user) app.setupListeners(); });
+                onAuthStateChanged(auth, (user) => { 
+                    if (user) {
+                        dot.classList.replace('bg-gray-500', 'bg-green-500');
+                        text.innerText = "متصل بنجاح";
+                        setTimeout(() => statusEl.style.opacity = '0', 3000);
+                        app.setupListeners(); 
+                    }
+                });
             },
 
             setupListeners() {
@@ -1047,9 +1110,10 @@
             },
 
             toggleSelectUser(id, isChecked) {
-                if (isChecked === undefined) { // Called from individual checkbox click
-                    const cb = document.querySelector(`.user-checkbox[value="${id}"]`);
-                    isChecked = cb.checked;
+                // If called from onclick, isChecked might be undefined
+                if (typeof isChecked === 'undefined') {
+                     const cb = document.querySelector(`.user-checkbox[value="${id}"]`);
+                     isChecked = cb.checked;
                 }
                 
                 if (isChecked) {
@@ -1057,6 +1121,10 @@
                 } else {
                     app.selectedUsers.delete(id);
                 }
+                
+                // Update UI count if modal is open (optional but nice)
+                const countEl = document.getElementById('bulkSelectedCount');
+                if(countEl) countEl.innerText = `سيتم المنح لـ ${app.selectedUsers.size} شخص`;
             },
 
             openBulkGrantModal() {
@@ -1147,7 +1215,7 @@
                 document.getElementById('profileEditModal').classList.remove('hidden');
             },
 
-            // --- Updated Profile Update Logic (Using Storage) ---
+            // --- Updated Profile Update Logic (Hybrid: Storage -> Base64 Fallback) ---
             async updateProfile() {
                 const u = app.data.currentUser;
                 const pass = document.getElementById('newPassVol').value;
@@ -1155,23 +1223,43 @@
                 const fileInput = document.getElementById('avatarUpload');
                 
                 let avatar = u.avatar;
+                const updateData = { pass, bio };
+
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const storageRef = ref(storage, `users/${u.id}/profile.jpg`);
+                    
+                    alert("جاري رفع الصورة...");
+                    
+                    try {
+                        // 1. Try Firebase Storage
+                        await uploadBytes(storageRef, file);
+                        const url = await getDownloadURL(storageRef);
+                        updateData.avatar = url;
+                    } catch (storageError) {
+                        console.warn("Storage failed, falling back to Base64:", storageError);
+                        // 2. Fallback to Base64 if storage fails (e.g. permissions)
+                        try {
+                            const base64 = await new Promise((resolve, reject) => {
+                                const reader = new FileReader();
+                                reader.onload = (e) => resolve(e.target.result);
+                                reader.onerror = (e) => reject(e);
+                                reader.readAsDataURL(file);
+                            });
+                            updateData.avatar = base64;
+                        } catch (e) {
+                            alert("فشل رفع الصورة كلياً.");
+                        }
+                    }
+                }
 
                 try {
-                    if (fileInput.files.length > 0) {
-                        const file = fileInput.files[0];
-                        const storageRef = ref(storage, `users/${u.id}/profile.jpg`);
-                        
-                        alert("جاري رفع الصورة... يرجى الانتظار");
-                        await uploadBytes(storageRef, file);
-                        avatar = await getDownloadURL(storageRef);
-                    }
-
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), { pass, bio, avatar });
-                    alert("تم تحديث الملف الشخصي");
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), updateData);
+                    alert("تم تحديث الملف الشخصي بنجاح!");
                     document.getElementById('profileEditModal').classList.add('hidden');
                 } catch (error) {
                     console.error(error);
-                    alert("حدث خطأ أثناء الحفظ: " + error.message);
+                    alert("حدث خطأ في قاعدة البيانات: " + error.message);
                 }
             },
 
@@ -1310,7 +1398,10 @@
             // --- Public Roster Logic ---
             renderPublicRoster() {
                 const today = new Date().toLocaleDateString('en-CA');
-                document.getElementById('rosterDateDisplay').innerText = new Date().toLocaleDateString('ar-JO', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
+                const dateEl = document.getElementById('rosterDateDisplay');
+                if (dateEl) {
+                     dateEl.innerText = new Date().toLocaleDateString('ar-JO', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
+                }
 
                 const approvedUsers = app.data.users.filter(u => 
                     u.shifts && u.shifts.some(s => s.date === today && s.status === 'approved')
@@ -1528,9 +1619,236 @@
                         <span class="text-[10px] px-2 py-0.5 rounded-md font-bold ${color}">${v.status}</span>
                     </div>`;
                 }).join('');
+
+                // --- Admin Daily Approved Roster ---
+                // Set default date to today if picker is empty
+                const picker = document.getElementById('adminRosterPicker');
+                if (picker && !picker.value) {
+                    picker.value = new Date().toLocaleDateString('en-CA');
+                }
+                
+                // Trigger render for the selected date
+                app.renderAdminRoster(picker ? picker.value : new Date().toLocaleDateString('en-CA'));
+            },
+            
+            // --- New Function: Render Admin Roster Grid ---
+            renderAdminRoster(dateStr) {
+                if(!dateStr) return;
+                
+                // Update display text
+                const dateObj = new Date(dateStr);
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const dateText = dateObj.toLocaleDateString('ar-JO', options);
+                
+                const dateDisplay = document.getElementById('adminRosterDate');
+                if(dateDisplay) dateDisplay.innerText = dateText;
+
+                const approvedUsers = app.data.users.filter(u => 
+                    u.shifts && u.shifts.some(s => s.date === dateStr && s.status === 'approved')
+                );
+
+                const rosterGrid = document.getElementById('adminApprovedRosterGrid');
+                if(!rosterGrid) return;
+
+                if (approvedUsers.length === 0) {
+                    rosterGrid.innerHTML = `<div class="col-span-full text-center py-8 text-gray-400 bg-gray-50 dark:bg-[#0f172a] rounded-xl border border-dashed border-gray-200 dark:border-gray-700 text-xs">لا توجد مناوبات معتمدة لهذا اليوم.</div>`;
+                    return;
+                }
+
+                rosterGrid.innerHTML = approvedUsers.map(u => {
+                    const rank = app.getRankInfo(u.stats?.hours || 0);
+                    return `
+                    <div class="bg-gray-50 dark:bg-[#0f172a] border border-gray-100 dark:border-gray-700 p-3 rounded-xl flex items-center gap-3">
+                         <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 font-bold text-sm border-2 ${rank.class.split(' ')[1]} overflow-hidden">
+                             ${u.avatar ? `<img src="${u.avatar}" class="w-full h-full object-cover">` : u.name.charAt(0)}
+                         </div>
+                         <div>
+                             <h4 class="dark:text-white font-bold text-xs">${u.name}</h4>
+                             <p class="text-jcd-gold text-[9px] font-bold opacity-80">${rank.title}</p>
+                         </div>
+                    </div>`;
+                }).join('');
+            },
+            
+            // --- New Function: Export Daily Roster PDF ---
+            exportDailyRoster() {
+                const dateStr = document.getElementById('adminRosterPicker').value;
+                if(!dateStr) return alert("الرجاء اختيار تاريخ");
+                
+                const approvedUsers = app.data.users.filter(u => 
+                    u.shifts && u.shifts.some(s => s.date === dateStr && s.status === 'approved')
+                );
+                
+                if(approvedUsers.length === 0) return alert("لا يوجد أسماء لتصديرها لهذا اليوم");
+                
+                const content = `
+                    <div style="text-align: right; padding: 20px; font-family: sans-serif;">
+                        <div style="text-align:center; margin-bottom:20px;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Jordan_Civil_Defence_Logo.png" style="height:60px;">
+                            <h2>مديرية دفاع مدني المفرق</h2>
+                            <h3>كشف المناوبات المعتمد</h3>
+                            <p>التاريخ: ${dateStr}</p>
+                        </div>
+                        <table style="width:100%; border-collapse: collapse; margin-top: 20px;" border="1" cellpadding="8">
+                            <thead>
+                                <tr style="background:#f0f0f0;">
+                                    <th>#</th>
+                                    <th>الاسم</th>
+                                    <th>المعرف</th>
+                                    <th>الرتبة</th>
+                                    <th>ملاحظات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${approvedUsers.map((u, i) => `
+                                    <tr>
+                                        <td>${i+1}</td>
+                                        <td>${u.name}</td>
+                                        <td>${u.id}</td>
+                                        <td>${app.getRankInfo(u.stats?.hours).title}</td>
+                                        <td></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <div style="margin-top:40px; display:flex; justify-content:space-between;">
+                            <div>التوقيع: .....................</div>
+                            <div>الختم:</div>
+                        </div>
+                    </div>
+                `;
+                
+                const element = document.createElement('div');
+                element.innerHTML = content;
+                html2pdf().from(element).save(`Roster_${dateStr}.pdf`);
             },
 
-            // --- Updated Logo Update Logic (Using Storage) ---
+            // --- Updated Check-in Request ---
+            async requestCheckIn() {
+                const u = app.data.currentUser;
+                const now = new Date();
+                const pending = {
+                    date: now.toLocaleDateString('ar-JO'),
+                    time: now.toLocaleTimeString('ar-JO')
+                };
+                
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), {
+                    pending_checkin: pending
+                });
+                alert("تم إرسال طلب بدء المناوبة للإدارة للموافقة.");
+                app.renderVolunteerUI();
+            },
+
+            async approveCheckIn(uid, approved) {
+                const u = app.data.users.find(x => x.id === uid);
+                if (!u) return;
+                
+                if (approved) {
+                    const session = { 
+                        date: u.pending_checkin.date, 
+                        start: u.pending_checkin.time, 
+                        end: '-', 
+                        points: 0, hours: 0 
+                    };
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), {
+                        history: [...(u.history || []), session],
+                        pending_checkin: null
+                    });
+                    app.notifyUser(uid, "تمت الموافقة على بدء مناوبتك. بالتوفيق يا نشمي!");
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), {
+                        text: `${u.name} بدأ المناوبة (موافقة)`, type: 'checkin', time: Date.now()
+                    });
+                } else {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), {
+                        pending_checkin: null
+                    });
+                    app.notifyUser(uid, "تم رفض طلب بدء المناوبة. راجع الإدارة.");
+                }
+            },
+
+            async approveShift(uid, date, approved) {
+                 const u = app.data.users.find(x => x.id === uid);
+                 if (!u) return;
+
+                 const updatedShifts = (u.shifts || []).map(s => {
+                     if (s.date === date) {
+                         return { ...s, status: approved ? 'approved' : 'rejected' };
+                     }
+                     return s;
+                 });
+
+                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), {
+                     shifts: updatedShifts
+                 });
+
+                 app.notifyUser(uid, approved ? `تمت الموافقة على مناوبة ${date}` : `تم رفض طلب مناوبة ${date}`);
+                 alert(approved ? "تم اعتماد المناوبة" : "تم رفض المناوبة");
+                 app.renderAdminDashboard(); // Refresh UI
+            },
+
+            async checkOut() {
+                const u = app.data.currentUser;
+                if (!u.history || u.history.length === 0) return;
+                
+                const sessions = [...u.history];
+                const last = sessions[sessions.length - 1];
+                if (last.end !== '-') return;
+                
+                const now = new Date();
+                last.end = now.toLocaleTimeString('ar-JO');
+                
+                // Calculate Duration
+                last.hours = 4; // Mock 4 hours
+                last.points = 10; // Mock 10 points
+                
+                const newStats = {
+                    points: (u.stats?.points || 0) + 10,
+                    hours: (u.stats?.hours || 0) + 4
+                };
+
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), {
+                    history: sessions,
+                    stats: newStats
+                });
+                
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), {
+                    text: `${u.name} أنهى المناوبة`, type: 'checkout', time: Date.now()
+                });
+                app.notifyUser(u.id, "تم إنهاء المناوبة بنجاح ورصد النقاط.");
+                app.renderVolunteerUI();
+            },
+
+            async notifyUser(uid, msg) {
+                const u = app.data.users.find(x => x.id === uid);
+                const newNotif = { text: msg, read: false, time: Date.now() };
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), {
+                    notifications: [newNotif, ...(u.notifications || [])]
+                });
+            },
+
+            toggleNotifications() {
+                const modal = document.getElementById('notificationsModal');
+                const list = document.getElementById('notifList');
+                modal.classList.toggle('hidden');
+                
+                if (!modal.classList.contains('hidden')) {
+                    const u = app.data.currentUser;
+                    const notifs = u.notifications || [];
+                    list.innerHTML = notifs.length > 0 ? notifs.map(n => `
+                        <div class="p-3 border-b dark:border-gray-700 ${n.read ? 'opacity-60 bg-gray-50 dark:bg-[#0f172a]' : 'bg-blue-50/50 dark:bg-blue-900/10'} hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                            <p class="dark:text-white font-bold text-xs mb-1">${n.text}</p>
+                            <span class="text-[10px] text-gray-400 font-mono flex items-center gap-1"><i class="far fa-clock"></i> ${new Date(n.time).toLocaleString()}</span>
+                        </div>
+                    `).join('') : '<p class="text-center text-gray-400 py-8 text-xs">لا توجد إشعارات جديدة</p>';
+
+                    if (notifs.some(n => !n.read)) {
+                        const updated = notifs.map(n => ({ ...n, read: true }));
+                        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), { notifications: updated });
+                    }
+                }
+            },
+
+            // --- Updated Logo Update Logic (Hybrid: Storage -> Base64 Fallback) ---
             async updateLogo() {
                 const input = document.getElementById('logoUploader');
                 if (input.files.length > 0) {
@@ -1543,10 +1861,18 @@
                         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { logo: downloadURL }, { merge: true });
                         alert("تم تحديث شعار الموقع بنجاح");
                     } catch (error) {
-                        console.error(error);
-                         if (error.code === 'storage/unauthorized') {
-                             alert("عذراً، لا تملك صلاحية لرفع الملفات. \n\nالحل: اذهب إلى Firebase Console > Storage > Rules \nواستبدل القواعد بـ:\nallow read, write: if true;");
-                         } else {
+                         console.warn("Storage failed, falling back to Base64:", error);
+                         // Fallback to Base64 if storage fails
+                         try {
+                            const base64 = await new Promise((resolve, reject) => {
+                                const reader = new FileReader();
+                                reader.onload = (e) => resolve(e.target.result);
+                                reader.onerror = (e) => reject(e);
+                                reader.readAsDataURL(file);
+                            });
+                             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { logo: base64 }, { merge: true });
+                             alert("تم تحديث شعار الموقع بنجاح (وضع احتياطي)");
+                         } catch (e) {
                              alert("حدث خطأ أثناء الرفع: " + error.message);
                          }
                     }
@@ -1557,13 +1883,14 @@
                 const name = document.getElementById('newVolName').value;
                 const id = document.getElementById('newVolId').value;
                 const pass = document.getElementById('newVolPass').value;
+                const role = document.getElementById('newVolRole').value;
                 
                 if(!name || !id || !pass) return;
                 
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id), {
-                    id, name, pass, role: 'volunteer', status: 'active', stats: {points:0, hours:0}, history:[], shifts:[]
+                    id, name, pass, role, status: 'active', stats: {points:0, hours:0}, history:[], shifts:[]
                 });
-                alert("تم إضافة النشمي");
+                alert("تم إضافة المستخدم بنجاح");
                 document.getElementById('addNashmiModal').classList.add('hidden');
             },
             
