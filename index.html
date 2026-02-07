@@ -208,12 +208,12 @@
             </div>
             
             <!-- NEW: Public Roster (Daily Approved Shifts) -->
-            <div id="public-roster" class="mt-16 max-w-5xl mx-auto">
+            <div id="public-roster" class="mt-16 max-w-6xl mx-auto">
                 <div class="text-center mb-8">
                     <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-2 flex items-center justify-center gap-2"><i class="fas fa-calendar-check text-green-500"></i> جدول المناوبات المعتمد لليوم</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400" id="rosterDateDisplay"></p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 font-bold" id="rosterDateDisplay"></p>
                 </div>
-                <div id="approvedRosterGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div id="approvedRosterGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4">
                     <!-- Cards will be injected here -->
                 </div>
             </div>
@@ -907,6 +907,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, addDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // REMOVED: storage import to avoid errors
 
         // -----------------------------------------------------------------------------------------
         // --- منطقة الإعدادات ---
@@ -930,6 +931,7 @@
         const fireApp = initializeApp(firebaseConfig);
         const auth = getAuth(fireApp);
         const db = getFirestore(fireApp);
+        // const storage = getStorage(fireApp); // Removed
 
         // --- FIXED STATIC USERS (Source of Truth) ---
         const STATIC_USERS = [
@@ -1108,8 +1110,7 @@
             },
 
             toggleSelectUser(id, isChecked) {
-                // If called from onclick, isChecked might be undefined
-                if (typeof isChecked === 'undefined') {
+                if (isChecked === undefined) { 
                      const cb = document.querySelector(`.user-checkbox[value="${id}"]`);
                      isChecked = cb.checked;
                 }
@@ -1120,7 +1121,6 @@
                     app.selectedUsers.delete(id);
                 }
                 
-                // Update UI count if modal is open (optional but nice)
                 const countEl = document.getElementById('bulkSelectedCount');
                 if(countEl) countEl.innerText = `سيتم المنح لـ ${app.selectedUsers.size} شخص`;
             },
@@ -1163,7 +1163,7 @@
                 alert(`تم منح المكافآت لـ ${updates.length} متطوع بنجاح`);
                 document.getElementById('bulkGrantModal').classList.add('hidden');
                 app.selectedUsers.clear();
-                app.renderAdminDashboard(); // Refresh table to clear checkboxes
+                app.renderAdminDashboard(); 
             },
             
             // --- Single User Grant ---
@@ -1213,7 +1213,7 @@
                 document.getElementById('profileEditModal').classList.remove('hidden');
             },
 
-            // --- Updated Profile Update Logic (Using Base64 - Free & Easy) ---
+            // --- Updated Profile Update Logic (Pure Base64 for 100% Free) ---
             async updateProfile() {
                 const u = app.data.currentUser;
                 const pass = document.getElementById('newPassVol').value;
@@ -1221,15 +1221,12 @@
                 const fileInput = document.getElementById('avatarUpload');
                 
                 let avatar = u.avatar;
-
-                // Create update object dynamically
                 const updateData = { pass, bio };
 
-                // تحويل الصورة لنص Base64 لتخزينها في الداتابيس مباشرة
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
                     
-                    // ضغط وتصغير الصورة قبل التحويل (لتفادي حجم 1MB)
+                    // Client-side Resize to prevent Firestore limit errors
                     const resizeImage = (file) => new Promise((resolve) => {
                         const reader = new FileReader();
                         reader.readAsDataURL(file);
@@ -1238,19 +1235,19 @@
                             img.src = event.target.result;
                             img.onload = () => {
                                 const elem = document.createElement('canvas');
-                                const width = 300; // تصغير العرض إلى 300 بكسل
+                                const width = 300; 
                                 const scaleFactor = width / img.width;
                                 elem.width = width;
                                 elem.height = img.height * scaleFactor;
                                 const ctx = elem.getContext('2d');
                                 ctx.drawImage(img, 0, 0, width, img.height * scaleFactor);
-                                resolve(elem.toDataURL('image/jpeg', 0.7)); // ضغط الجودة 70%
+                                resolve(elem.toDataURL('image/jpeg', 0.6)); // Lower quality for Firestore
                             }
                         }
                     });
 
                     try {
-                        alert("جاري معالجة ورفع الصورة...");
+                        alert("جاري معالجة الصورة...");
                         const base64 = await resizeImage(file);
                         updateData.avatar = base64; 
                     } catch (e) {
@@ -1261,11 +1258,11 @@
 
                 try {
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), updateData);
-                    alert("تم تحديث الملف الشخصي");
+                    alert("تم تحديث الملف الشخصي بنجاح!");
                     document.getElementById('profileEditModal').classList.add('hidden');
                 } catch (error) {
                     console.error(error);
-                    alert("حدث خطأ أثناء الحفظ: " + error.message);
+                    alert("حدث خطأ في قاعدة البيانات: " + error.message);
                 }
             },
 
@@ -1730,160 +1727,20 @@
                 html2pdf().from(element).save(`Roster_${dateStr}.pdf`);
             },
 
-            // --- Updated Check-in Request ---
-            async requestCheckIn() {
-                const u = app.data.currentUser;
-                const now = new Date();
-                const pending = {
-                    date: now.toLocaleDateString('ar-JO'),
-                    time: now.toLocaleTimeString('ar-JO')
-                };
-                
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), {
-                    pending_checkin: pending
-                });
-                alert("تم إرسال طلب بدء المناوبة للإدارة للموافقة.");
-                app.renderVolunteerUI();
-            },
-
-            async approveCheckIn(uid, approved) {
-                const u = app.data.users.find(x => x.id === uid);
-                if (!u) return;
-                
-                if (approved) {
-                    const session = { 
-                        date: u.pending_checkin.date, 
-                        start: u.pending_checkin.time, 
-                        end: '-', 
-                        points: 0, hours: 0 
-                    };
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), {
-                        history: [...(u.history || []), session],
-                        pending_checkin: null
-                    });
-                    app.notifyUser(uid, "تمت الموافقة على بدء مناوبتك. بالتوفيق يا نشمي!");
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), {
-                        text: `${u.name} بدأ المناوبة (موافقة)`, type: 'checkin', time: Date.now()
-                    });
-                } else {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), {
-                        pending_checkin: null
-                    });
-                    app.notifyUser(uid, "تم رفض طلب بدء المناوبة. راجع الإدارة.");
-                }
-            },
-
-            async approveShift(uid, date, approved) {
-                 const u = app.data.users.find(x => x.id === uid);
-                 if (!u) return;
-
-                 const updatedShifts = (u.shifts || []).map(s => {
-                     if (s.date === date) {
-                         return { ...s, status: approved ? 'approved' : 'rejected' };
-                     }
-                     return s;
-                 });
-
-                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), {
-                     shifts: updatedShifts
-                 });
-
-                 app.notifyUser(uid, approved ? `تمت الموافقة على مناوبة ${date}` : `تم رفض طلب مناوبة ${date}`);
-                 alert(approved ? "تم اعتماد المناوبة" : "تم رفض المناوبة");
-                 app.renderAdminDashboard(); // Refresh UI
-            },
-
-            async checkOut() {
-                const u = app.data.currentUser;
-                if (!u.history || u.history.length === 0) return;
-                
-                const sessions = [...u.history];
-                const last = sessions[sessions.length - 1];
-                if (last.end !== '-') return;
-                
-                const now = new Date();
-                last.end = now.toLocaleTimeString('ar-JO');
-                
-                // Calculate Duration
-                last.hours = 4; // Mock 4 hours
-                last.points = 10; // Mock 10 points
-                
-                const newStats = {
-                    points: (u.stats?.points || 0) + 10,
-                    hours: (u.stats?.hours || 0) + 4
-                };
-
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), {
-                    history: sessions,
-                    stats: newStats
-                });
-                
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), {
-                    text: `${u.name} أنهى المناوبة`, type: 'checkout', time: Date.now()
-                });
-                app.notifyUser(u.id, "تم إنهاء المناوبة بنجاح ورصد النقاط.");
-                app.renderVolunteerUI();
-            },
-
-            async notifyUser(uid, msg) {
-                const u = app.data.users.find(x => x.id === uid);
-                const newNotif = { text: msg, read: false, time: Date.now() };
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), {
-                    notifications: [newNotif, ...(u.notifications || [])]
-                });
-            },
-
-            toggleNotifications() {
-                const modal = document.getElementById('notificationsModal');
-                const list = document.getElementById('notifList');
-                modal.classList.toggle('hidden');
-                
-                if (!modal.classList.contains('hidden')) {
-                    const u = app.data.currentUser;
-                    const notifs = u.notifications || [];
-                    list.innerHTML = notifs.length > 0 ? notifs.map(n => `
-                        <div class="p-3 border-b dark:border-gray-700 ${n.read ? 'opacity-60 bg-gray-50 dark:bg-[#0f172a]' : 'bg-blue-50/50 dark:bg-blue-900/10'} hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                            <p class="dark:text-white font-bold text-xs mb-1">${n.text}</p>
-                            <span class="text-[10px] text-gray-400 font-mono flex items-center gap-1"><i class="far fa-clock"></i> ${new Date(n.time).toLocaleString()}</span>
-                        </div>
-                    `).join('') : '<p class="text-center text-gray-400 py-8 text-xs">لا توجد إشعارات جديدة</p>';
-
-                    if (notifs.some(n => !n.read)) {
-                        const updated = notifs.map(n => ({ ...n, read: true }));
-                        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), { notifications: updated });
-                    }
-                }
-            },
-
-            // --- Updated Logo Update Logic (Base64 + Compression + Size Limit) ---
+            // --- Updated Logo Update Logic (Using Base64 - Free & Easy) ---
             async updateLogo() {
                 const input = document.getElementById('logoUploader');
                 if (input.files.length > 0) {
                     const file = input.files[0];
-                    
-                    // 1. Size Check (< 700KB)
-                    if (file.size > 700 * 1024) {
-                         alert("حجم الصورة كبير جداً! يرجى اختيار صورة أصغر من 700 كيلوبايت.");
-                         return;
-                    }
-
                     const reader = new FileReader();
                     reader.onload = async (e) => {
                         const base64 = e.target.result;
                         try {
-                            // 2. Save directly to Firestore
                             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { logo: base64 }, { merge: true });
-                            
-                            // 3. Immediate UI Update
-                            const navLogo = document.getElementById('navLogo');
-                            const heroLogo = document.getElementById('heroLogo');
-                            if(navLogo) navLogo.src = base64;
-                            if(heroLogo) heroLogo.src = base64;
-
-                            alert("تم تحديث شعار الموقع بنجاح!");
+                            alert("تم تحديث شعار الموقع بنجاح");
                         } catch(err) {
-                            console.error("Logo update error:", err);
-                            alert("حدث خطأ أثناء حفظ الشعار. قد تكون الصورة كبيرة جداً لقاعدة البيانات.");
+                            console.error(err);
+                            alert("خطأ في الحفظ");
                         }
                     };
                     reader.readAsDataURL(file);
