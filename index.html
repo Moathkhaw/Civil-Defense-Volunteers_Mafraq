@@ -256,7 +256,10 @@
                     <div class="relative group">
                         <div class="absolute -inset-1 bg-gradient-to-r from-jcd-gold to-yellow-600 rounded-full blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
                         <!-- Replaced Image with Dynamic Avatar -->
-                        <div id="dashAvatarContainer" class="relative h-32 w-32 rounded-full border-4 border-white/10 shadow-xl bg-gray-800 flex items-center justify-center text-4xl font-black text-white"></div>
+                        <div id="dashAvatarContainer" class="relative h-32 w-32 rounded-full border-4 border-white/10 shadow-xl bg-gray-800 flex items-center justify-center text-4xl font-black text-white object-cover overflow-hidden">
+                            <img id="dashAvatar" src="" class="w-full h-full object-cover hidden">
+                            <span id="dashAvatarInitial"></span>
+                        </div>
                         <span id="dashRankBadge" class="absolute -bottom-3 right-1/2 translate-x-1/2 bg-jcd-gold text-black text-xs px-4 py-1.5 rounded-full font-black shadow-lg whitespace-nowrap border border-white/20">نشمي</span>
                     </div>
                     <div class="text-center md:text-right flex-grow">
@@ -857,6 +860,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, addDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         // -----------------------------------------------------------------------------------------
         // --- منطقة الإعدادات ---
@@ -880,6 +884,7 @@
         const fireApp = initializeApp(firebaseConfig);
         const auth = getAuth(fireApp);
         const db = getFirestore(fireApp);
+        const storage = getStorage(fireApp);
 
         // --- FIXED STATIC USERS (Source of Truth) ---
         const STATIC_USERS = [
@@ -1142,7 +1147,7 @@
                 document.getElementById('profileEditModal').classList.remove('hidden');
             },
 
-            // --- Updated Profile Update Logic (Using Base64 - Free & Easy) ---
+            // --- Updated Profile Update Logic (Using Storage) ---
             async updateProfile() {
                 const u = app.data.currentUser;
                 const pass = document.getElementById('newPassVol').value;
@@ -1151,28 +1156,17 @@
                 
                 let avatar = u.avatar;
 
-                // Create update object dynamically
-                const updateData = { pass, bio };
-
-                // تحويل الصورة لنص Base64 لتخزينها في الداتابيس مباشرة
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    try {
-                        const base64 = await new Promise((resolve, reject) => {
-                            const reader = new FileReader();
-                            reader.onload = (e) => resolve(e.target.result);
-                            reader.onerror = (e) => reject(e);
-                            reader.readAsDataURL(file);
-                        });
-                        updateData.avatar = base64; // Only add avatar if new one is selected
-                    } catch (e) {
-                        alert("خطأ في قراءة الملف");
-                        return;
-                    }
-                }
-
                 try {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), updateData);
+                    if (fileInput.files.length > 0) {
+                        const file = fileInput.files[0];
+                        const storageRef = ref(storage, `users/${u.id}/profile.jpg`);
+                        
+                        alert("جاري رفع الصورة... يرجى الانتظار");
+                        await uploadBytes(storageRef, file);
+                        avatar = await getDownloadURL(storageRef);
+                    }
+
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), { pass, bio, avatar });
                     alert("تم تحديث الملف الشخصي");
                     document.getElementById('profileEditModal').classList.add('hidden');
                 } catch (error) {
@@ -1295,8 +1289,8 @@
                         ${isLeader ? '<div class="absolute top-0 right-0 bg-gradient-to-bl from-jcd-gold to-yellow-600 text-black text-[10px] font-black px-4 py-1.5 rounded-bl-2xl z-10 shadow-lg"><i class="fas fa-crown"></i> قيادة</div>' : ''}
                         <div class="relative w-28 h-28 mx-auto mb-5 flex items-center justify-center">
                             <div class="absolute inset-0 bg-jcd-blue/10 rounded-full blur-xl group-hover:bg-jcd-blue/20 transition"></div>
-                             <div class="relative w-full h-full rounded-full border-4 ${isLeader ? 'border-jcd-gold shadow-[0_0_20px_rgba(251,191,36,0.3)]' : rank.class} bg-gray-800 flex items-center justify-center text-4xl font-black text-white">
-                                ${initial}
+                             <div class="relative w-full h-full rounded-full border-4 ${isLeader ? 'border-jcd-gold shadow-[0_0_20px_rgba(251,191,36,0.3)]' : rank.class} bg-gray-800 flex items-center justify-center text-4xl font-black text-white overflow-hidden">
+                                ${u.avatar ? `<img src="${u.avatar}" class="w-full h-full object-cover">` : initial}
                              </div>
                         </div>
                         <h3 class="font-black text-xl mb-1 truncate text-slate-800 dark:text-white">${u.name}</h3>
@@ -1334,8 +1328,8 @@
                     const rank = app.getRankInfo(u.stats?.hours || 0);
                     return `
                     <div class="bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-2xl flex items-center gap-4 hover:bg-white/20 transition">
-                         <div class="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-lg border-2 ${rank.class.split(' ')[1]}">
-                             ${u.name.charAt(0)}
+                         <div class="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-lg border-2 ${rank.class.split(' ')[1]} overflow-hidden">
+                             ${u.avatar ? `<img src="${u.avatar}" class="w-full h-full object-cover">` : u.name.charAt(0)}
                          </div>
                          <div>
                              <h4 class="text-white font-bold text-sm">${u.name}</h4>
@@ -1351,11 +1345,19 @@
                 document.getElementById('volBioDisplay').innerText = u.bio || "متطوع نشيط";
                 
                 // Avatar Logic for Dashboard
-                const dashAvatar = document.getElementById('dashAvatarContainer');
-                if(dashAvatar) {
-                    dashAvatar.innerText = u.name.charAt(0);
-                    // Add random gradient or color based on name for fun? Or stick to solid.
-                    // Sticking to CSS class for now.
+                const dashAvatarContainer = document.getElementById('dashAvatarContainer');
+                const dashAvatarImg = document.getElementById('dashAvatar');
+                const dashAvatarInitial = document.getElementById('dashAvatarInitial');
+
+                if(dashAvatarContainer) {
+                    if (u.avatar) {
+                        dashAvatarImg.src = u.avatar;
+                        dashAvatarImg.classList.remove('hidden');
+                        dashAvatarInitial.innerText = '';
+                    } else {
+                        dashAvatarImg.classList.add('hidden');
+                        dashAvatarInitial.innerText = u.name.charAt(0);
+                    }
                 }
                 
                 if(u.warnings && u.warnings.length > 0) {
@@ -1404,7 +1406,9 @@
                     `<div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition rounded-lg">
                         <div class="flex items-center gap-3">
                             <span class="font-black text-gray-300 w-5 text-center">${i+1}</span>
-                            <div class="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs font-bold">${x.name.charAt(0)}</div>
+                            <div class="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs font-bold overflow-hidden">
+                                ${x.avatar ? `<img src="${x.avatar}" class="w-full h-full object-cover">` : x.name.charAt(0)}
+                            </div>
                             <span class="text-sm font-bold dark:text-white">${x.name}</span>
                         </div>
                         <span class="text-xs font-black text-jcd-gold bg-yellow-500/10 px-2 py-1 rounded-md">${x.stats?.points || 0} pts</span>
@@ -1498,7 +1502,9 @@
                         <td class="p-3 text-center"><input type="checkbox" value="${u.id}" class="user-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer" onclick="app.toggleSelectUser('${u.id}')"></td>
                         <td class="p-3 font-bold dark:text-white">
                             <div class="flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[10px] text-gray-500 font-bold">${u.name.charAt(0)}</div>
+                                <div class="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[10px] text-gray-500 font-bold overflow-hidden">
+                                     ${u.avatar ? `<img src="${u.avatar}" class="w-full h-full object-cover">` : u.name.charAt(0)}
+                                </div>
                                 <div>${u.name} <span class="text-[9px] text-gray-400 block">${u.role === 'admin' ? 'مدير' : 'متطوع'}</span></div>
                             </div>
                         </td>
@@ -1524,161 +1530,26 @@
                 }).join('');
             },
 
-            // --- Updated Check-in Request ---
-            async requestCheckIn() {
-                const u = app.data.currentUser;
-                const now = new Date();
-                const pending = {
-                    date: now.toLocaleDateString('ar-JO'),
-                    time: now.toLocaleTimeString('ar-JO')
-                };
-                
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), {
-                    pending_checkin: pending
-                });
-                alert("تم إرسال طلب بدء المناوبة للإدارة للموافقة.");
-                app.renderVolunteerUI();
-            },
-
-            async approveCheckIn(uid, approved) {
-                const u = app.data.users.find(x => x.id === uid);
-                if (!u) return;
-                
-                if (approved) {
-                    const session = { 
-                        date: u.pending_checkin.date, 
-                        start: u.pending_checkin.time, 
-                        end: '-', 
-                        points: 0, hours: 0 
-                    };
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), {
-                        history: [...(u.history || []), session],
-                        pending_checkin: null
-                    });
-                    app.notifyUser(uid, "تمت الموافقة على بدء مناوبتك. بالتوفيق يا نشمي!");
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), {
-                        text: `${u.name} بدأ المناوبة (موافقة)`, type: 'checkin', time: Date.now()
-                    });
-                } else {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), {
-                        pending_checkin: null
-                    });
-                    app.notifyUser(uid, "تم رفض طلب بدء المناوبة. راجع الإدارة.");
-                }
-            },
-
-            async approveShift(uid, date, approved) {
-                 const u = app.data.users.find(x => x.id === uid);
-                 if (!u) return;
-
-                 const updatedShifts = (u.shifts || []).map(s => {
-                     if (s.date === date) {
-                         return { ...s, status: approved ? 'approved' : 'rejected' };
-                     }
-                     return s;
-                 });
-
-                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), {
-                     shifts: updatedShifts
-                 });
-
-                 app.notifyUser(uid, approved ? `تمت الموافقة على مناوبة ${date}` : `تم رفض طلب مناوبة ${date}`);
-            },
-
-            async checkOut() {
-                const u = app.data.currentUser;
-                if (!u.history || u.history.length === 0) return;
-                
-                const sessions = [...u.history];
-                const last = sessions[sessions.length - 1];
-                if (last.end !== '-') return;
-                
-                const now = new Date();
-                last.end = now.toLocaleTimeString('ar-JO');
-                
-                // Calculate Duration
-                last.hours = 4; // Mock 4 hours
-                last.points = 10; // Mock 10 points
-                
-                const newStats = {
-                    points: (u.stats?.points || 0) + 10,
-                    hours: (u.stats?.hours || 0) + 4
-                };
-
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), {
-                    history: sessions,
-                    stats: newStats
-                });
-                
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), {
-                    text: `${u.name} أنهى المناوبة`, type: 'checkout', time: Date.now()
-                });
-                app.notifyUser(u.id, "تم إنهاء المناوبة بنجاح ورصد النقاط.");
-                app.renderVolunteerUI();
-            },
-
-            async notifyUser(uid, msg) {
-                const u = app.data.users.find(x => x.id === uid);
-                const newNotif = { text: msg, read: false, time: Date.now() };
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), {
-                    notifications: [newNotif, ...(u.notifications || [])]
-                });
-            },
-
-            toggleNotifications() {
-                const modal = document.getElementById('notificationsModal');
-                const list = document.getElementById('notifList');
-                modal.classList.toggle('hidden');
-                
-                if (!modal.classList.contains('hidden')) {
-                    const u = app.data.currentUser;
-                    const notifs = u.notifications || [];
-                    list.innerHTML = notifs.length > 0 ? notifs.map(n => `
-                        <div class="p-3 border-b dark:border-gray-700 ${n.read ? 'opacity-60 bg-gray-50 dark:bg-[#0f172a]' : 'bg-blue-50/50 dark:bg-blue-900/10'} hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                            <p class="dark:text-white font-bold text-xs mb-1">${n.text}</p>
-                            <span class="text-[10px] text-gray-400 font-mono flex items-center gap-1"><i class="far fa-clock"></i> ${new Date(n.time).toLocaleString()}</span>
-                        </div>
-                    `).join('') : '<p class="text-center text-gray-400 py-8 text-xs">لا توجد إشعارات جديدة</p>';
-
-                    if (notifs.some(n => !n.read)) {
-                        const updated = notifs.map(n => ({ ...n, read: true }));
-                        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id), { notifications: updated });
-                    }
-                }
-            },
-
-            // --- Updated Logo Update Logic (Base64 + Compression + Size Limit) ---
+            // --- Updated Logo Update Logic (Using Storage) ---
             async updateLogo() {
                 const input = document.getElementById('logoUploader');
                 if (input.files.length > 0) {
                     const file = input.files[0];
-                    
-                    // 1. Size Check (< 700KB)
-                    if (file.size > 700 * 1024) {
-                         alert("حجم الصورة كبير جداً! يرجى اختيار صورة أصغر من 700 كيلوبايت.");
-                         return;
+                    const storageRef = ref(storage, 'settings/site_logo.png');
+                    try {
+                        alert("جاري رفع الشعار... يرجى الانتظار");
+                        await uploadBytes(storageRef, file);
+                        const downloadURL = await getDownloadURL(storageRef);
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { logo: downloadURL }, { merge: true });
+                        alert("تم تحديث شعار الموقع بنجاح");
+                    } catch (error) {
+                        console.error(error);
+                         if (error.code === 'storage/unauthorized') {
+                             alert("عذراً، لا تملك صلاحية لرفع الملفات. \n\nالحل: اذهب إلى Firebase Console > Storage > Rules \nواستبدل القواعد بـ:\nallow read, write: if true;");
+                         } else {
+                             alert("حدث خطأ أثناء الرفع: " + error.message);
+                         }
                     }
-
-                    const reader = new FileReader();
-                    reader.onload = async (e) => {
-                        const base64 = e.target.result;
-                        try {
-                            // 2. Save directly to Firestore
-                            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { logo: base64 }, { merge: true });
-                            
-                            // 3. Immediate UI Update
-                            const navLogo = document.getElementById('navLogo');
-                            const heroLogo = document.getElementById('heroLogo');
-                            if(navLogo) navLogo.src = base64;
-                            if(heroLogo) heroLogo.src = base64;
-
-                            alert("تم تحديث شعار الموقع بنجاح!");
-                        } catch(err) {
-                            console.error("Logo update error:", err);
-                            alert("حدث خطأ أثناء حفظ الشعار. قد تكون الصورة كبيرة جداً لقاعدة البيانات.");
-                        }
-                    };
-                    reader.readAsDataURL(file);
                 }
             },
             
@@ -1919,7 +1790,11 @@
                 
                 const avatar = document.getElementById('idCardAvatar');
                 if(avatar) {
-                    avatar.innerText = u.name.charAt(0);
+                     if(u.avatar) {
+                        avatar.innerHTML = `<img src="${u.avatar}" class="w-full h-full object-cover rounded-2xl">`;
+                     } else {
+                        avatar.innerText = u.name.charAt(0);
+                     }
                 }
                 document.getElementById('idCardModal').classList.remove('hidden');
             },
@@ -1938,7 +1813,11 @@
                  
                  const avatar = document.getElementById('fpAvatar');
                  if(avatar) {
-                     avatar.innerText = u.name.charAt(0);
+                     if(u.avatar) {
+                        avatar.innerHTML = `<img src="${u.avatar}" class="w-full h-full object-cover rounded-full">`;
+                     } else {
+                        avatar.innerText = u.name.charAt(0);
+                     }
                  }
                  
                  document.getElementById('fpHistory').innerHTML = (u.history || []).map(h => `<div class="p-2 border-b dark:border-gray-700 last:border-0 flex justify-between"><span class="text-gray-500">${h.date}</span> <span class="text-white">${h.start} - ${h.end}</span></div>`).join('');
