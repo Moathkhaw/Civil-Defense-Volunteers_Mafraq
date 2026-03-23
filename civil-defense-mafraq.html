@@ -107,7 +107,7 @@
             <div class="flex items-center gap-6">
                 <div id="guestLinks" class="hidden md:flex items-center gap-1 text-sm font-bold bg-white/5 p-1 rounded-full border border-white/10">
                     <button onclick="app.showSection('home')" class="px-4 py-1.5 rounded-full hover:bg-white/10 text-gray-200 hover:text-white transition">الرئيسية</button>
-                    <button onclick="app.showSection('nashama-section')" class="px-4 py-1.5 rounded-full hover:bg-white/10 text-gray-200 hover:text-white transition">بوابة النشامى</button>
+                    <button onclick="app.showSection('nashama-section')" class="px-4 py-1.5 rounded-full hover:bg-white/10 text-gray-200 hover:text-white transition">نشامى فريق المفرق</button>
                     <button onclick="app.showLogin('volunteer')" class="px-4 py-1.5 rounded-full bg-jcd-gold text-black hover:bg-yellow-400 shadow-lg hover:shadow-yellow-400/20 transition">دخول النظام</button>
                 </div>
                 <div id="userMenu" class="hidden flex items-center gap-4">
@@ -180,7 +180,7 @@
         <!-- NASHAMA -->
         <section id="nashama-section" class="fade-in hidden py-8">
             <div class="text-center mb-12">
-                <h2 class="text-4xl md:text-5xl font-black text-jcd-blue dark:text-white mb-3">بوابة النشامى</h2>
+                <h2 class="text-4xl md:text-5xl font-black text-jcd-blue dark:text-white mb-3">نشامى فريق المفرق</h2>
                 <div class="h-1 w-24 bg-jcd-gold mx-auto rounded-full mb-4"></div>
                 <p class="text-gray-500 dark:text-gray-400 font-medium text-lg">قائمة الشرف للمتطوعين المتميزين - تحديث حي</p>
             </div>
@@ -212,6 +212,12 @@
                     </div>
                     <button type="submit" id="loginBtn" class="w-full bg-gradient-to-l from-jcd-blue to-blue-700 hover:to-blue-800 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition transform active:scale-95 flex justify-center items-center gap-2 mt-4"><span>دخول آمن</span><i class="fas fa-arrow-left"></i></button>
                 </form>
+                
+                <div id="setupDBContainer" class="hidden text-center mt-6 pt-4 border-t dark:border-gray-700">
+                    <p class="text-xs text-red-500 mb-2 font-bold"><i class="fas fa-exclamation-triangle"></i> قاعدة البيانات (فايربيس) فارغة!</p>
+                    <button type="button" onclick="app.seedDatabase()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs px-4 py-3 rounded-xl font-bold transition shadow-lg w-full">تهيئة فايربيس (رفع 38 مستخدم سحابياً)</button>
+                </div>
+
                 <div class="text-center mt-6 pt-4 border-t dark:border-gray-700">
                     <span id="systemStatus" class="inline-flex items-center gap-2 text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-white/5 px-3 py-1 rounded-full">
                         <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> النظام متصل ومحمي
@@ -814,57 +820,13 @@
 
         // Gemini API key - replace with your key from Google AI Studio
         const GEMINI_API_KEY = typeof __app_id !== 'undefined' && __app_id !== "" ? __app_id : "YOUR_GEMINI_API_KEY_HERE";
-        const appId = 'mafraq-diamond-v33';
-
-        // Cloudinary config
-        const CLOUDINARY_CLOUD_NAME = "YOUR_CLOUDINARY_CLOUD_NAME";
-        const CLOUDINARY_UPLOAD_PRESET = "YOUR_UNSIGNED_UPLOAD_PRESET";
+        
+        // Bumped version string to force immediate sync of all updated static users
+        const appId = 'mafraq-diamond-v35';
 
         const fireApp = initializeApp(firebaseConfig);
         const auth = getAuth(fireApp);
         const db = getFirestore(fireApp);
-
-        // ===================== STATIC USERS =====================
-        const STATIC_USERS = [
-            { id: '101', name: 'معاذ الخوالدة', pass: '2026', role: 'admin', isOfficial: true },
-            { id: '102', name: 'محمد المساعيد', pass: '2026', role: 'admin', isOfficial: true },
-            { id: '1', name: 'مالك عليمات', pass: '4821', role: 'volunteer' },
-            { id: '2', name: 'هدى', pass: '9253', role: 'volunteer' },
-            { id: '3', name: 'معاذ الخوالدة', pass: '7741', role: 'volunteer' },
-            { id: '4', name: 'حسام الحسبان', pass: '3320', role: 'volunteer' },
-            { id: '5', name: 'إبراهيم سعود', pass: '5198', role: 'volunteer' },
-            { id: '6', name: 'خولة نضال', pass: '6024', role: 'volunteer' },
-            { id: '7', name: 'رسول الخزاعلة', pass: '8812', role: 'volunteer' },
-            { id: '8', name: 'سلوى الصقور', pass: '1472', role: 'volunteer' },
-            { id: '9', name: 'شرف الحراحشة', pass: '9630', role: 'volunteer' },
-            { id: '10', name: 'عبد الرحمن يونس', pass: '2580', role: 'volunteer' },
-            { id: '11', name: 'عمر ياسين', pass: '3691', role: 'volunteer' },
-            { id: '12', name: 'امين المصري', pass: '7410', role: 'volunteer' },
-            { id: '13', name: 'فرحان الخوالدة', pass: '8520', role: 'volunteer' },
-            { id: '14', name: 'حور العرقان', pass: '9514', role: 'volunteer' },
-            { id: '15', name: 'مدين الشرفات', pass: '7532', role: 'volunteer' },
-            { id: '16', name: 'سند عليمات', pass: '1598', role: 'volunteer' },
-            { id: '17', name: 'شهم الحسبان', pass: '3574', role: 'volunteer' },
-            { id: '18', name: 'سجود شديفات', pass: '4568', role: 'volunteer' },
-            { id: '19', name: 'يوسف دعجة', pass: '1238', role: 'volunteer' },
-            { id: '20', name: 'بلقيس الكناني', pass: '9874', role: 'volunteer' },
-            { id: '21', name: 'عهد الحسبان', pass: '6541', role: 'volunteer' },
-            { id: '22', name: 'أرم', pass: '3214', role: 'volunteer' },
-            { id: '23', name: 'اريج النعيمات', pass: '7890', role: 'volunteer' },
-            { id: '24', name: 'عزيزة السقال', pass: '4125', role: 'volunteer' },
-            { id: '25', name: 'باسل', pass: '6325', role: 'volunteer' },
-            { id: '26', name: 'في', pass: '9654', role: 'volunteer' },
-            { id: '27', name: 'حمدان عليمات', pass: '8521', role: 'volunteer' },
-            { id: '28', name: 'ختام ابو قديري', pass: '7412', role: 'volunteer' },
-            { id: '29', name: 'لارا العجلوني', pass: '3698', role: 'volunteer' },
-            { id: '30', name: 'ميار الهواري', pass: '2587', role: 'volunteer' },
-            { id: '31', name: 'ريتاج', pass: '1478', role: 'volunteer' },
-            { id: '32', name: 'رويدا', pass: '9632', role: 'volunteer' },
-            { id: '33', name: 'ربى', pass: '1596', role: 'volunteer' },
-            { id: '34', name: 'سوار', pass: '7539', role: 'volunteer' },
-            { id: '35', name: 'سندس عليمات', pass: '8523', role: 'volunteer' },
-            { id: '38', name: 'رند العناسوه', pass: '3091', role: 'volunteer' }
-        ];
 
         // ===================== DEBOUNCE UTILITY =====================
         function debounce(fn, delay) {
@@ -877,7 +839,7 @@
 
         // ===================== APP =====================
         window.app = {
-            data: { users: [], chats: [], currentUser: null, vehicles: [], courses: [], logs: [], suggestions: [], settings: { exceptions: [], announcements: [] } },
+            data: { users: [], chats: [], vehicles: [], courses: [], logs: [], suggestions: [], settings: { exceptions: [], announcements: [] } },
             map: null,
             mapObserver: null,
             selectedUsers: new Set(),
@@ -963,8 +925,12 @@
                         snap.forEach(d => app.data[c].push({ ...d.data(), _id: d.id }));
 
                         if (c === 'users') {
-                            app.syncStaticUsersIfNeeded();
                             app.checkSession();
+                            const setupBtn = document.getElementById('setupDBContainer');
+                            if (setupBtn) {
+                                if (app.data.users.length === 0) setupBtn.classList.remove('hidden');
+                                else setupBtn.classList.add('hidden');
+                            }
                         }
                         if (c === 'settings') {
                             const s = app.data.settings.find(x => x.id === 'main');
@@ -987,36 +953,78 @@
                 });
             },
 
-            // FIX: Only sync missing users (one-time flag per session + parallel writes)
-            async syncStaticUsersIfNeeded() {
-                const syncDoneKey = 'jcd_sync_done_v33';
-                if (sessionStorage.getItem(syncDoneKey)) return;
-                sessionStorage.setItem(syncDoneKey, '1');
+            async seedDatabase() {
+                const btn = document.querySelector('#setupDBContainer button');
+                const originalText = btn.innerText;
+                btn.innerText = "جاري رفع البيانات إلى فايربيس...";
+                btn.disabled = true;
 
-                // Find which users are actually missing
-                const existingIds = new Set(app.data.users.map(u => u.id));
-                const missing = STATIC_USERS.filter(u => !existingIds.has(u.id));
-                if (missing.length === 0) return;
+                const SEED_USERS = [
+                    { id: '101', name: 'معاذ الخوالدة', pass: '2026', role: 'admin', isOfficial: true, bio: 'مدير النظام' },
+                    { id: '102', name: 'محمد المساعيد', pass: '2026', role: 'admin', isOfficial: true, bio: 'إدارة العمليات' },
+                    { id: '1', name: 'مالك عليمات', pass: '4821', role: 'volunteer' },
+                    { id: '2', name: 'هدى', pass: '9253', role: 'volunteer' },
+                    { id: '3', name: 'معاذ الخوالدة', pass: '2003', role: 'volunteer', isOfficial: true, bio: 'مسؤول الدفعة' },
+                    { id: '4', name: 'حسام الحسبان', pass: '3320', role: 'volunteer' },
+                    { id: '5', name: 'إبراهيم سعود', pass: '5198', role: 'volunteer' },
+                    { id: '6', name: 'خولة نضال', pass: '6024', role: 'volunteer' },
+                    { id: '7', name: 'رسول الخزاعلة', pass: '8812', role: 'volunteer' },
+                    { id: '8', name: 'سلوى الصقور', pass: '1472', role: 'volunteer' },
+                    { id: '9', name: 'شرف الحراحشة', pass: '9630', role: 'volunteer' },
+                    { id: '10', name: 'عبد الرحمن يونس', pass: '2580', role: 'volunteer' },
+                    { id: '11', name: 'عمر ياسين', pass: '3691', role: 'volunteer' },
+                    { id: '12', name: 'امين المصري', pass: '7410', role: 'volunteer' },
+                    { id: '13', name: 'فرحان الخوالدة', pass: '8520', role: 'volunteer' },
+                    { id: '14', name: 'حور العرقان', pass: '9514', role: 'volunteer' },
+                    { id: '15', name: 'مدين الشرفات', pass: '7532', role: 'volunteer' },
+                    { id: '16', name: 'سند عليمات', pass: '1598', role: 'volunteer' },
+                    { id: '17', name: 'شهم الحسبان', pass: '3574', role: 'volunteer' },
+                    { id: '18', name: 'سجود شديفات', pass: '4568', role: 'volunteer', isOfficial: true, bio: 'مسؤول الدفعة' },
+                    { id: '19', name: 'يوسف دعجة', pass: '1238', role: 'volunteer' },
+                    { id: '20', name: 'بلقيس الكناني', pass: '9874', role: 'volunteer' },
+                    { id: '21', name: 'عهد الحسبان', pass: '6541', role: 'volunteer' },
+                    { id: '22', name: 'أرم', pass: '3214', role: 'volunteer' },
+                    { id: '23', name: 'اريج النعيمات', pass: '7890', role: 'volunteer' },
+                    { id: '24', name: 'عزيزة السقال', pass: '4125', role: 'volunteer' },
+                    { id: '25', name: 'باسل', pass: '6325', role: 'volunteer' },
+                    { id: '26', name: 'في', pass: '9654', role: 'volunteer' },
+                    { id: '27', name: 'حمدان عليمات', pass: '8521', role: 'volunteer' },
+                    { id: '28', name: 'ختام ابو قديري', pass: '7412', role: 'volunteer' },
+                    { id: '29', name: 'لارا العجلوني', pass: '3698', role: 'volunteer' },
+                    { id: '30', name: 'ميار الهواري', pass: '2587', role: 'volunteer' },
+                    { id: '31', name: 'ريتاج', pass: '1478', role: 'volunteer' },
+                    { id: '32', name: 'رويدة', pass: '9632', role: 'volunteer' },
+                    { id: '33', name: 'ربى', pass: '1596', role: 'volunteer' },
+                    { id: '34', name: 'سوار', pass: '7539', role: 'volunteer' },
+                    { id: '35', name: 'سندس عليمات', pass: '8523', role: 'volunteer' },
+                    { id: '36', name: 'رند العناسوة', pass: '3091', role: 'volunteer' }
+                ];
 
-                // Write all missing users in parallel using batch
-                const batch = writeBatch(db);
-                missing.forEach(u => {
-                    const ref = doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id);
-                    batch.set(ref, {
-                        id: u.id, name: u.name, pass: u.pass,
-                        role: u.role || 'volunteer', status: 'active',
-                        isOfficial: u.isOfficial || false,
-                        stats: { points: 0, hours: 0 },
-                        history: [], notifications: [],
-                        lastLogin: new Date().toISOString(),
-                        customBadges: [], warnings: [], shifts: []
+                try {
+                    const batch = writeBatch(db);
+                    SEED_USERS.forEach(u => {
+                        const ref = doc(db, 'artifacts', appId, 'public', 'data', 'users', u.id);
+                        batch.set(ref, {
+                            id: u.id, name: u.name, pass: u.pass,
+                            role: u.role || 'volunteer', status: 'active',
+                            isOfficial: u.isOfficial || false,
+                            bio: u.bio || 'متطوع نشيط', 
+                            stats: { points: 0, hours: 0 },
+                            history: [], notifications: [],
+                            lastLogin: new Date().toISOString(),
+                            customBadges: [], warnings: [], shifts: []
+                        });
                     });
-                });
-                await batch.commit();
-
-                // Ensure settings doc exists
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'),
-                    { exceptions: [], announcement: "", logo: null }, { merge: true });
+                    await batch.commit();
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { exceptions: [], announcement: "", logo: null }, { merge: true });
+                    
+                    document.getElementById('setupDBContainer').classList.add('hidden');
+                    await app.customAlert("تم رفع جميع البيانات الـ 38 إلى فايربيس بنجاح! قاعدة بياناتك السحابية جاهزة 100%.", "نجاح الرفع", "<i class='fas fa-cloud-upload-alt text-green-500'></i>");
+                } catch(e) {
+                    await app.customAlert("حدث خطأ أثناء الرفع: " + e.message, "خطأ", "<i class='fas fa-times-circle text-red-500'></i>");
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
             },
 
             getAvailableShiftDates() {
@@ -1137,7 +1145,6 @@
                 document.getElementById('bulkGrantModal').classList.remove('hidden');
             },
 
-            // FIX: Use Promise.all for parallel Firestore writes
             async submitBulkAction() {
                 const pts = parseInt(document.getElementById('bulkPoints').value) || 0;
                 const hrs = parseFloat(document.getElementById('bulkHours').value) || 0;
@@ -1238,11 +1245,10 @@
                 document.getElementById('profileEditModal').classList.remove('hidden');
             },
 
-            // FIX: Cloudinary upload with proper error handling
-            async _uploadToCloudinary(file) {
-                const resizeImage = (f) => new Promise((resolve) => {
+            async _processImageUpload(file) {
+                return new Promise((resolve) => {
                     const reader = new FileReader();
-                    reader.readAsDataURL(f);
+                    reader.readAsDataURL(file);
                     reader.onload = (e) => {
                         const img = new Image();
                         img.src = e.target.result;
@@ -1253,22 +1259,10 @@
                             canvas.width = img.width * scale;
                             canvas.height = img.height * scale;
                             canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                            resolve(canvas.toDataURL('image/jpeg', 0.8));
+                            resolve(canvas.toDataURL('image/jpeg', 0.7));
                         };
                     };
                 });
-
-                if (!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME === 'YOUR_CLOUDINARY_CLOUD_NAME') {
-                    throw new Error('يرجى إعداد Cloudinary: أضف Cloud Name و Upload Preset في إعدادات الكود.');
-                }
-                const base64 = await resizeImage(file);
-                const formData = new FormData();
-                formData.append('file', base64);
-                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
-                const data = await res.json();
-                if (!data.secure_url) throw new Error(data.error?.message || "فشل الرفع إلى Cloudinary");
-                return data.secure_url;
             },
 
             async updateProfile() {
@@ -1280,7 +1274,7 @@
                 if (fileInput.files.length > 0) {
                     try {
                         app.customAlert("جاري رفع الصورة...", "جارِ الرفع", "<i class='fas fa-spinner fa-spin text-blue-500'></i>");
-                        updateData.avatar = await app._uploadToCloudinary(fileInput.files[0]);
+                        updateData.avatar = await app._processImageUpload(fileInput.files[0]);
                     } catch (e) {
                         await app.customAlert(e.message, "خطأ في الرفع", "<i class='fas fa-times-circle text-red-500'></i>");
                         return;
@@ -1300,7 +1294,7 @@
                 if (!input.files.length) return;
                 try {
                     app.customAlert("جاري رفع الشعار...", "جارِ الرفع", "<i class='fas fa-spinner fa-spin text-blue-500'></i>");
-                    const url = await app._uploadToCloudinary(input.files[0]);
+                    const url = await app._processImageUpload(input.files[0]);
                     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { logo: url }, { merge: true });
                     await app.customAlert("تم تحديث شعار الموقع بنجاح!", "نجاح", "<i class='fas fa-check-circle text-green-500'></i>");
                 } catch (e) {
@@ -1330,20 +1324,8 @@
                 const id = document.getElementById('username').value.trim();
                 const pass = document.getElementById('password').value.trim();
                 let user = app.data.users.find(u => u.id === id);
-                if (!user) {
-                    const su = STATIC_USERS.find(u => u.id === id);
-                    if (su && su.pass === pass) {
-                        try {
-                            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id), {
-                                ...su, role: su.role || 'volunteer', status: 'active',
-                                stats: { points: 0, hours: 0 }, lastLogin: new Date().toISOString(),
-                                history: [], notifications: [], warnings: [], shifts: []
-                            });
-                            user = su;
-                        } catch (e) { await app.customAlert("خطأ في الاتصال بالقاعدة"); return; }
-                    }
-                }
-                if (!user) return app.customAlert("المستخدم غير موجود.", "تنبيه", "<i class='fas fa-exclamation-circle text-yellow-500'></i>");
+                
+                if (!user) return app.customAlert("المستخدم غير موجود في قاعدة بيانات فايربيس! تأكد من الرقم أو قم بتهيئة القاعدة أولاً.", "تنبيه", "<i class='fas fa-exclamation-circle text-yellow-500'></i>");
                 if (user.pass !== pass) return app.customAlert("كلمة المرور غير صحيحة", "تنبيه", "<i class='fas fa-exclamation-circle text-yellow-500'></i>");
                 if (user.status === 'banned') return app.customAlert("الحساب محظور: " + (user.banReason || "مخالفة الأنظمة"), "حساب محظور", "<i class='fas fa-ban text-red-500'></i>");
 
@@ -1372,7 +1354,6 @@
                     app.showSection('volunteer-dashboard');
                     app.renderVolunteerUI();
                     document.getElementById('chatWidget').classList.remove('hidden');
-                    // FIX: Use IntersectionObserver to lazy-init map
                     app.initMapObserver();
                 }
             },
@@ -1627,7 +1608,6 @@
                 if (!dateStr) return app.customAlert("الرجاء اختيار تاريخ");
                 const approvedUsers = app.data.users.filter(u => u.shifts?.some(s => s.date === dateStr && s.status === 'approved'));
                 if (approvedUsers.length === 0) return app.customAlert("لا يوجد أسماء لتصديرها لهذا اليوم");
-                // Lazy load html2pdf only when needed
                 if (!window.html2pdf) {
                     await app._loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
                 }
@@ -1731,7 +1711,6 @@
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'courses'), { title, added: Date.now() });
             },
 
-            // FIX: Filter now integrated into renderNashamaSection (uses state)
             _filterNashama(q) { app.renderNashamaSection(); },
             _filterUsers(q) {
                 const rows = document.getElementById('fullUsersTable').getElementsByTagName('tr');
@@ -1787,7 +1766,6 @@
                 if (el) el.innerText = msgs[Math.floor(Math.random() * msgs.length)];
             },
 
-            // FIX: Lazy-load Leaflet JS only when map is visible
             _loadScript(src) {
                 return new Promise((resolve, reject) => {
                     if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
